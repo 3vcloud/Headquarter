@@ -611,3 +611,16 @@ cleanup:
         ret = 1;
     return ret;
 }
+
+int portal_login_dummy(struct portal_login_result *result, const char *username, const char *password)
+{
+    struct str token = s_from_c_str("d8b9bf5d-90b1-4cbd-9b76-88da7be763b6");
+    struct str user_id = s_from_c_str("fa520ee2-4419-4eb4-ae49-6e9abe6ef24f");
+    if (!s_parse_uuid(&token, &result->token)) {
+        return 1;
+    }
+    if (!s_parse_uuid(&user_id, &result->user_id)) {
+        return 1;
+    }
+    return 0;
+}
