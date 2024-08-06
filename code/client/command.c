@@ -4,6 +4,8 @@
 #define COMMAND_C_INC
 
 CommandOptions options;
+int parsed_argc;
+char** parsed_argv;
 
 void print_help(bool terminate)
 {
