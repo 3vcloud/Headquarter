@@ -49,7 +49,8 @@ void parse_command_args(int argc, const char **argv)
     // @Remark: Currently, if the format is not valid, for instance -email with no
     // arguments following, we will print the help and exit. Maybe we just want
     // to returns with an error flag set.
-
+    parsed_argc = argc;
+    parsed_argv = argv;
     options.newauth = true;
     options.online_status = 1;
 
