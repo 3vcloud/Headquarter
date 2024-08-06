@@ -185,3 +185,11 @@ void parse_command_args(int argc, const char **argv)
         options.game_version = (uint32_t)game_version;
     }
 }
+
+HQAPI int GetArgc() {
+    return parsed_argc;
+}
+
+HQAPI char** GetArgv() {
+    return parsed_argv;
+}
