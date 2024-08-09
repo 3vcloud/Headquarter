@@ -211,4 +211,6 @@ HQAPI void              TradeRemoveItem(uint32_t item_id, uint32_t quantity);
 HQAPI void              TradeSendOffer(int gold);
 HQAPI void              TradeAccept(void);
 HQAPI void              TradeCancel(void);
+HQAPI int               GetArgc();
+HQAPI char**            GetArgv();
 #endif // HEADQUARTER_H

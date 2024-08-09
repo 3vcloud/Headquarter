@@ -40,6 +40,8 @@ typedef struct CommandOptions {
 } CommandOptions;
 
 extern CommandOptions options;
+extern int parsed_argc;
+extern char** parsed_argv;
 
 void print_help(bool terminate);
 void parse_command_args(int argc, const char **argv);
