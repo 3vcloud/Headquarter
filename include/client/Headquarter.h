@@ -25,6 +25,10 @@
 #include <common/dlfunc.h>
 #include <common/noreturn.h>
 
+#ifndef _Noreturn
+#define _Noreturn
+#endif
+
 typedef uint32_t uint;
 typedef uint64_t msec_t;
 typedef uint32_t AgentId;
