@@ -61,7 +61,14 @@ void log_init(const char *log_file_name)
     // @Cleanup: Ensure the directory exist.
 
     char file_path[1128];
-    snprintf(file_path, sizeof(file_path), "%s/logs/%s", dir_path, log_file_name);
+    if (*log_file_name == '/') {
+        // Absolute path
+        snprintf(file_path, sizeof(file_path), "%s", dir_path, log_file_name);
+    }
+    else {
+        // Relative to /logs folder
+        snprintf(file_path, sizeof(file_path), "%s/logs/%s", dir_path, log_file_name);
+    }
     if ((log_file = fopen(file_path, "a")) == NULL) {
         fprintf(stderr, "Failed to open the file '%s'\n", file_path);
         return;
