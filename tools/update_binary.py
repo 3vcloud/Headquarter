@@ -42,7 +42,8 @@ def main(args):
         # The scanner holds reference to `exe_path` preventing it from being overwritten.
         if 'scanner' in globals():
             del scanner
-        os.unlink(exe_path)
+        if os.path.isfile(exe_path):
+          os.unlink(exe_path)
         with open(exe_path, 'wb') as fd:
             fd.write(fr.decompressed())
         scanner = FileScanner(exe_path)
