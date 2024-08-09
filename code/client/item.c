@@ -120,7 +120,6 @@ void HandleItemGeneralInfo(Connection *conn, size_t psize, Packet *packet)
         /* +h009D */ uint32_t n_modifier;
         /* +h00A1 */ uint32_t modifier[64];
     } ItemInfo;
-
 #pragma pack(pop)
 
     assert(packet->header == GAME_SMSG_ITEM_GENERAL_INFO);
@@ -212,7 +211,7 @@ void HandleInventoryItemQuantity(Connection *conn, size_t psize, Packet *packet)
     } ItemQuantity;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_INVENTORY_ITEM_QUANTITY);
+    assert(packet->header == GAME_SMSG_ITEM_UPDATE_QUANTITY);
     assert(sizeof(ItemQuantity) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -240,7 +239,7 @@ void HandleInventoryItemLocation(Connection *conn, size_t psize, Packet *packet)
     } ItemLocation;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_INVENTORY_ITEM_LOCATION);
+    assert(packet->header == GAME_SMSG_ITEM_MOVED_TO_LOCATION);
     assert(sizeof(ItemLocation) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
@@ -502,7 +501,7 @@ void HandleItemChangeLocation(Connection *conn, size_t psize, Packet *packet)
 #pragma pack(push, 1)
     typedef struct {
         Header  header;
-        int16_t unk1;
+        int16_t stream_id;
         int32_t item_id;
         int16_t bag_id;
         int8_t  slot;
