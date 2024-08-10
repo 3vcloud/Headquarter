@@ -214,7 +214,6 @@ void ContinuePlayCharacter(GwClient *client, uint32_t error_code)
     // Character *cc = client->current_character; // can use to find the map
     uint32_t trans_id = issue_next_transaction(client, AsyncType_PlayCharacter);
     LogDebug("AuthSrv_RequestInstance: {trans_id: %lu}", trans_id);
-    client->state = AwaitGameServerInfo;
 
     uint32_t choosen_map_id;
     if (options.opt_map_id.set) {
