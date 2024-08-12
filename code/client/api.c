@@ -336,8 +336,7 @@ HQAPI void RedirectMap(uint32_t map_id, District district, int district_number)
     DistrictLanguage language;
     extract_district(&client->world, district, &region, &language);
 
-    uint32_t map_type;
-    map_type = find_map_type_from_map_id(map_id);
+    uint32_t map_type = find_map_type_from_map_id(map_id);
     uint32_t trans_id = issue_next_transaction(client, AsyncType_None);
     AuthSrv_RequestInstance(&client->auth_srv, trans_id, map_id,
         map_type, district_number, region, language);

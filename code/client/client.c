@@ -73,7 +73,7 @@ struct region_type_to_map_type {
     RegionType region_type;
 };
 
-static uint32_t find_map_type_from_map_id(uint32_t map_id)
+uint32_t find_map_type_from_map_id(uint32_t map_id)
 {
     static const struct area_info area_info_table[] = {
         #include "data/area_info.data"
