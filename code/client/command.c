@@ -56,6 +56,15 @@ void parse_command_args(int argc, const char** argv)
     options.newauth = true;
     options.online_status = 1;
 
+    const char *ptr;
+    if ((ptr = getenv("HEADQUARTER_PASSWORD")) != NULL) {
+        safe_strcpy(options.password, ARRAY_SIZE(options.password), ptr);
+    }
+
+    if ((ptr = getenv("HEADQUARTER_2FA_SECRET")) != NULL) {
+        safe_strcpy(options.secret_2fa, ARRAY_SIZE(options.secret_2fa), ptr);
+    }
+
     for (int i = 0; i < argc; i++) {
         const char* arg = argv[i];
 
@@ -98,8 +107,10 @@ void parse_command_args(int argc, const char** argv)
         else if (!strcmp(arg, "-password")) {
             check_for_more_arguments(argc, argv, i, 1);
             safe_strcpy(options.password, ARRAY_SIZE(options.password), argv[++i]);
-        }
-        else if (!strcmp(arg, "-character")) {
+        } else if (!strcmp(arg, "-2fa-secret")) {
+            check_for_more_arguments(argc, argv, i, 1);
+            safe_strcpy(options.secret_2fa, ARRAY_SIZE(options.secret_2fa), argv[++i]);
+        } else if (!strcmp(arg, "-character")) {
             check_for_more_arguments(argc, argv, i, 1);
             safe_strcpy(options.charname, ARRAY_SIZE(options.charname), argv[++i]);
         }
