@@ -599,7 +599,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_PLAYER_ATTR_MAX_BALTHAZAR]       = HandlePlayerAttrMaxBalthazar;
     handlers[GAME_SMSG_PLAYER_ATTR_MAX_IMPERIAL]        = HandlePlayerAttrMaxImperial;
     handlers[GAME_SMSG_PLAYER_ATTR_UPDATE]              = HandlePlayerAttrUpdate;
-
+    handlers[GAME_SMSG_MAPS_UNLOCKED]                   = HandlePlayerUnlockedAreas;
     // skills
     handlers[GAME_SMSG_SKILLBAR_UPDATE_SKILL]           = HandleSkillbarUpdateSkill;
     handlers[GAME_SMSG_SKILLBAR_UPDATE]                 = HandleSkillbarUpdate;

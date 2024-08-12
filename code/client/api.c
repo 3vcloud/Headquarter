@@ -190,6 +190,24 @@ leave:
     return map_id;
 }
 
+HQAPI bool IsMapUnlocked(uint32_t map_id)
+{
+    assert(client != NULL);
+    bool ret = false;
+    thread_mutex_lock(&client->mutex);
+    if (!(client->ingame && client->world.hash))
+        goto leave;
+    uint32_t real_index = map_id / 32;
+    if (real_index >= array_size(&client->player_hero.maps_unlocked))
+        goto leave;
+    uint32_t flag = 1 << (map_id % 32);
+    uint32_t val = array_at(&client->player_hero.maps_unlocked, real_index);
+    ret = (val & flag) != 0;
+leave:
+    thread_mutex_unlock(&client->mutex);
+    return ret;
+}
+
 HQAPI District GetDistrict(void)
 {
     assert(client != NULL);
