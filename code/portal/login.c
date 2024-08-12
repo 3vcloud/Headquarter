@@ -272,6 +272,7 @@ static int auth2f_upgrade_totp(
     struct sts_connection *sts,
     struct ssl_sts_connection *ssl,
     const char *otp,
+    size_t otp_len,
     int remember_me)
 {
     const char url[] = "/Auth2f/Upgrade";
@@ -282,7 +283,7 @@ static int auth2f_upgrade_totp(
     array_reserve(&content, 1024);
 
     appendf(&content, "<Request>\n");
-    appendf(&content, "<Otp>%06d</Otp>\n", otp);
+    appendf(&content, "<Otp>%.*s</Otp>\n", (int)otp_len, otp);
     if (remember_me != 0)
         appendf(&content, "<WhitelistIp/>\n");
     appendf(&content, "</Request>\n");
@@ -585,7 +586,7 @@ int portal_login(struct portal_login_result *result, const char *username, const
         }
 
         const int remember_me = 1;
-        if ((ret = auth2f_upgrade_totp(&sts, &ssl, otp, remember_me)) != 0) {
+        if ((ret = auth2f_upgrade_totp(&sts, &ssl, otp, otp_len, remember_me)) != 0) {
             goto cleanup;
         }
     }
