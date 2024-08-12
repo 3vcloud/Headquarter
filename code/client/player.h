@@ -3,7 +3,7 @@
 #endif
 #define CORE_PLAYER_H
 
-typedef array(uint32_t*) BitwiseArray;
+typedef array(uint32_t) BitwiseArray;
 typedef struct PlayerHero {
     FactionPoint imperial;
     FactionPoint balthazar;
