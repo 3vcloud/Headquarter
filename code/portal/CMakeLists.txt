@@ -39,7 +39,6 @@ target_include_directories(
 
 if (MSVC)
   # We disable the following warnings:
-  # - C4057: 'operator' : 'identifier1' indirection to slightly different base types from 'identifier2'
   # - C4115: named type definition in parentheses
   # - C4201: nonstandard extension used : nameless struct/union
   # - C4204: nonstandard extension used: non-constant aggregate initializer

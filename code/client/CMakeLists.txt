@@ -93,7 +93,7 @@ set_property(TARGET client PROPERTY ENABLE_EXPORTS 1)
 
 if (MSVC)
   # We disable the following warnings:
-  # - C4057: nonstandard extension used: nameless struct/union
+  # - C4201: nonstandard extension used: nameless struct/union
   # - C4204: nonstandard extension used: non-constant aggregate initializer
   # - C4221: nonstandard extension used: '<var>': cannot be initialized using address of automatic variable
   # - C4267: conversion from 'size_t' to 'int', possible loss of data
