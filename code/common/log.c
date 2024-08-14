@@ -87,7 +87,7 @@ static int log_time(char *buffer, size_t size)
     time_t t = time(NULL);
     struct tm ts;
     time_localtime(&t, &ts);
-    return strftime(buffer, size, "%Y-%m-%d %H:%M:%S", &ts);
+    return (int)strftime(buffer, size, "%Y-%m-%d %H:%M:%S", &ts);
 }
 
 int log_vmsg(unsigned int level, const char *format, va_list ap);

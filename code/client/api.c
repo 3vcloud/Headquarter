@@ -780,7 +780,7 @@ HQAPI int GetItemModStruct(uint32_t item_id, uint32_t* buffer, size_t length)
     if (!item)
         goto leave;
     if (!buffer) {
-        written = item->mod_struct.size;
+        written = (int)item->mod_struct.size;
         goto leave;
     }
     if (length < item->mod_struct.size)
