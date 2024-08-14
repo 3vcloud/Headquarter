@@ -2,6 +2,8 @@ from process import *
 
 import argparse
 
+from scanner import FileScanner
+
 region_type_to_str_table = {
     0:  'RegionType_AllianceBattle',
     1:  'RegionType_Arena',
@@ -64,6 +66,59 @@ def region_type_to_str(region_type):
 def region_to_str(region):
     return region_to_str_table[region]
 
+def get_area_info_from_scanner(scanner):
+    scan_addr = scanner.find(b'\x6B\xC6\x7C\x5E\x05', + 0x5)
+    table_addr = scanner.read(scan_addr, 'I')[0]
+    table_size = scanner.read(scan_addr - 0x1F, 'I')[0]
+    ENTRY_SIZE = 0x7C
+    if type(scanner) is FileScanner:
+        table_addr -= scanner.parsed.OPTIONAL_HEADER.ImageBase
+
+    size_in_bytes = table_size * ENTRY_SIZE
+    data = scanner.read(table_addr, f'{size_in_bytes}s')[0]
+    row = ''
+    for i in range(table_size):
+        campaign, continent, region, region_type, flags = struct.unpack_from('<IIIII', data, (i * ENTRY_SIZE))
+        x,y,icon_start_x,icon_start_y,icon_end_x,icon_end_y,icon_start_x_dupe,icon_start_y_dupe,icon_end_x_dupe,icon_end_y_dupe = struct.unpack_from('<IIIIIIIIII', data, (i * ENTRY_SIZE + 0x40))
+        region = region_to_str(region)
+        region_type = region_type_to_str(region_type)
+        if len(row) > 0:
+          row += ',\n'
+        row += '{'
+        row += f'.campaign = {campaign}, .continent = {continent}, .region = {region}, .region_type = {region_type}, .flags = 0x{flags:08X}'
+        if icon_start_x == 0:
+          start_x = icon_start_x_dupe
+          start_y = icon_start_y_dupe
+          end_x = icon_end_x_dupe
+          end_y = icon_end_y_dupe
+        else:
+          start_x = icon_start_x
+          start_y = icon_start_y
+          end_x = icon_end_x
+          end_y = icon_end_y
+        # row += f'.x = {x}, .y = {y}, .start_x = {start_x}, .start_y = {start_y}, .end_x = {end_x}, .end_y = {end_y}'
+        row += '}';
+    return row;
+
+    addr = scanner.find(b'\x8B\x45\x08\xC7\x00\x88\x00\x00\x00\xB8', +0xA)
+    keys, = scanner.read(addr)
+
+    if type(scanner) is FileScanner:
+        # It would be nice to not do that explicitly, but overall, this is a reloc,
+        # so when reading from a file, we need to remove the `ImageBase` to get an
+        # RVA based on 0.
+        keys -= scanner.parsed.OPTIONAL_HEADER.ImageBase
+
+    pr, = scanner.read(keys + 4, '4s')
+    pm, = scanner.read(keys + 8, '64s')
+    pk, = scanner.read(keys + 72, '64s')
+
+    pr = int.from_bytes(pr, byteorder='little')
+    pm = int.from_bytes(pm, byteorder='little')
+    pk = int.from_bytes(pk, byteorder='little')
+
+    return (pr, pm, pk)
+
 def main(args):
     if args.pid:
         proc = Process(args.pid)
@@ -71,19 +126,7 @@ def main(args):
         proc = Process.from_name(args.proc)
     scanner = ProcessScanner(proc)
 
-    scan_addr = scanner.find(b'\x6B\xC6\x7C\x5E\x05', + 0x5)
-    table_addr = proc.read(scan_addr, 'I')[0]
-    table_size = proc.read(scan_addr - 0x1F, 'I')[0]
-    ENTRY_SIZE = 0x7C
-
-    size_in_bytes = table_size * ENTRY_SIZE
-    data = proc.read(table_addr, f'{size_in_bytes}s')[0]
-    for i in range(table_size):
-        campaign, continent, region, region_type, flags = struct.unpack_from('<IIIII', data, (i * ENTRY_SIZE))
-        region = region_to_str(region)
-        region_type = region_type_to_str(region_type)
-        print(f'{{.campaign = {campaign}, .continent = {continent}, .region = {region}, .region_type = {region_type}, .flags = 0x{flags:08X}}},')
-
+    print(get_area_info_from_scanner(scanner))
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--pid", type=int, required=False,

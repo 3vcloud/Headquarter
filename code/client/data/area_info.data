@@ -874,4 +874,4 @@
 {.campaign = 2, .continent = 2, .region = Region_Kaineng, .region_type = RegionType_ExplorableZone, .flags = 0x00020020},
 {.campaign = 2, .continent = 2, .region = Region_ShingJea, .region_type = RegionType_ExplorableZone, .flags = 0x00020020},
 {.campaign = 0, .continent = 0, .region = Region_Swat, .region_type = RegionType_ExplorableZone, .flags = 0x04020228},
-{.campaign = 0, .continent = 0, .region = Region_Swat, .region_type = RegionType_ExplorableZone, .flags = 0x04020228},
+{.campaign = 0, .continent = 0, .region = Region_Swat, .region_type = RegionType_ExplorableZone, .flags = 0x04020228}
