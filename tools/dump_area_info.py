@@ -96,7 +96,7 @@ def get_area_info_from_scanner(scanner):
           start_y = icon_start_y
           end_x = icon_end_x
           end_y = icon_end_y
-        # row += f'.x = {x}, .y = {y}, .start_x = {start_x}, .start_y = {start_y}, .end_x = {end_x}, .end_y = {end_y}'
+        row += f', .x = {x}, .y = {y}, .start_x = {start_x}, .start_y = {start_y}, .end_x = {end_x}, .end_y = {end_y}'
         row += '}';
     return row;
 
