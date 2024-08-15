@@ -5,14 +5,7 @@
 
 static void init_world(World *world, uint32_t hash)
 {
-    array_init(&world->agents);
-    array_init(&world->bags);
-    array_init(&world->effects);
-    array_init(&world->guilds);
-    array_init(&world->items);
-    array_init(&world->parties);
-    array_init(&world->players);
-    array_init(&world->quests);
+    reset_world(world);
 
     array_resize(&world->agents, 64);
     array_resize(&world->bags, 32);
@@ -28,7 +21,6 @@ static void init_world(World *world, uint32_t hash)
     // We use pointers to element in a array of Skillbar.
     array_init(&world->skillbars);
 
-    world->player_count = 0;
     world->hash = hash;
 }
 
