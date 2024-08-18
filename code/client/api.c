@@ -188,6 +188,25 @@ HQAPI int GetMapId(void)
 leave:
     thread_mutex_unlock(&client->mutex);
     return map_id;
+} 
+
+HQAPI size_t GetMapsUnlocked(uint32_t* buffer, size_t length)
+{
+    assert(client != NULL);
+
+    size_t written = 0;
+    thread_mutex_lock(&client->mutex);
+    if (!(client->ingame && client->world.hash))
+        goto leave;
+    if (buffer) {
+        if (client->player_hero.maps_unlocked.size > length)
+            goto leave;
+        memcpy(buffer, client->player_hero.maps_unlocked.data, client->player_hero.maps_unlocked.size * sizeof(*client->player_hero.maps_unlocked.data));
+        written = client->player_hero.maps_unlocked.size;
+    }
+leave:
+    thread_mutex_unlock(&client->mutex);
+    return written;
 }
 
 HQAPI bool IsMapUnlocked(uint32_t map_id)

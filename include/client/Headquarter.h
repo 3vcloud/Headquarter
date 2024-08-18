@@ -97,6 +97,7 @@ HQAPI void              TravelHall(uint32_t guild_id);
 HQAPI void              LeaveHall(void);
 HQAPI void              RedirectMap(uint32_t map_id, District district, int district_number);
 HQAPI bool              IsMapUnlocked(uint32_t map_id);
+HQAPI size_t            GetMapsUnlocked(uint32_t* buffer, size_t length);
 
 HQAPI bool              GetInCinematic(void);
 HQAPI void              SkipCinematic(void);
