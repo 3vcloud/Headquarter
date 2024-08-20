@@ -49,8 +49,7 @@ void TransferGameServer(GwClient *client)
 
     assert(client->world.hash == 0);
     init_world(&client->world, transfer->world_id);
-    client->inventory.gold_character = 0;
-    client->inventory.gold_storage = 0;
+
     client->game_srv.host = transfer->host;
 
     if (!GameSrv_Connect(&client->game_srv, &client->uuid, &cc->uuid,

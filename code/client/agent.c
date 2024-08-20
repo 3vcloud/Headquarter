@@ -989,9 +989,8 @@ void HandlePlayerUpdateProfession(Connection *conn, size_t psize, Packet *packet
     World *world = get_world_or_abort(client);
 
     // 1. Update in agents array
-    ArrayAgent* agents = &client->world.agents;
-    ensure_agent_exist(client, pack->agent_id);
-    Agent* agent = array_at(agents, pack->agent_id);
+    ensure_agent_exist(&client->world, pack->agent_id);
+    Agent* agent = array_at(&client->world.agents, pack->agent_id);
     assert(agent);
 
     agent->prof1 = (Profession)pack->prof1;
