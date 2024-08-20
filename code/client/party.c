@@ -50,6 +50,29 @@ PartyHero *get_party_hero_agent(Party *party, AgentId agent_id)
     return NULL;
 }
 
+void HandleAgentPartySize(Connection* conn, size_t psize, Packet* packet) {
+#pragma pack(push, 1)
+    typedef struct {
+        Header header;
+        uint16_t player_id;
+        uint8_t size;
+    } AgentPartySize;
+#pragma pack(pop)
+    assert(packet->header == GAME_SMSG_UPDATE_AGENT_PARTYSIZE);
+    assert(psize == sizeof(AgentPartySize));
+
+    GwClient* client = cast(GwClient*)conn->data;
+    AgentPartySize* pack = cast(AgentPartySize*)packet;
+    assert(client&& client->game_srv.secured);
+    World* world = get_world_or_abort(client);
+    assert(array_inside(&world->players, pack->player_id));
+
+    Event params;
+    Event_Init(&params, EventType_PlayerPartySize);
+    params.PlayerPartySize.player_id = pack->player_id;
+    params.PlayerPartySize.size = pack->size;
+    broadcast_event(&client->event_mgr,&params);
+}
 void HandlePartySetDifficulty(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)

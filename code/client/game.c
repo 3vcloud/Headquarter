@@ -665,6 +665,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_EFFECT_REMOVED]                  = HandleEffectRemoved;
 
     // parties
+    handlers[GAME_SMSG_UPDATE_AGENT_PARTYSIZE]          = HandleAgentPartySize;
     handlers[GAME_SMSG_PARTY_SET_DIFFICULTY]            = HandlePartySetDifficulty;
     handlers[GAME_SMSG_PARTY_HERO_ADD]                  = HandlePartyHeroAdd;
     handlers[GAME_SMSG_PARTY_HERO_REMOVE]               = HandlePartyHeroRemove;

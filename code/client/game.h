@@ -207,6 +207,7 @@ void HandleEffectUpkeepApplied(Connection *conn, size_t psize, Packet *packet);
 void HandleEffectApplied(Connection *conn, size_t psize, Packet *packet);
 void HandleEffectRenewed(Connection *conn, size_t psize, Packet *packet);
 void HandleEffectRemoved(Connection *conn, size_t psize, Packet *packet);
+void HandleAgentPartySize(Connection* conn, size_t psize, Packet* packet);
 void HandlePartySetDifficulty(Connection *conn, size_t psize, Packet *packet);
 void HandlePartyHeroAdd(Connection *conn, size_t psize, Packet *packet);
 void HandlePartyHeroRemove(Connection *conn, size_t psize, Packet *packet);
