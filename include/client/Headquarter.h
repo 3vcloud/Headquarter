@@ -92,6 +92,8 @@ HQAPI void              LogoutToCharselect(void);
 HQAPI int               GetMapId(void);
 HQAPI District          GetDistrict(void);
 HQAPI int               GetDistrictNumber(void);
+HQAPI DistrictLanguage  GetDistrictLanguage(void);
+HQAPI DistrictRegion    GetDistrictRegion(void);
 HQAPI void              Travel(uint32_t map_id, District district, uint16_t district_number);
 HQAPI void              TravelHall(uint32_t guild_id);
 HQAPI void              LeaveHall(void);
