@@ -3,24 +3,22 @@
 #endif
 #define CORE_SKILL_C
 
-static Agent      *get_agent_safe(GwClient *client, AgentId id);
-static inline void agent_set_casting(Agent *agent, Skill *casting);
+Agent* get_agent_safe(World *world, AgentId id);
+void   agent_set_casting(Agent *agent, uint32_t skill_id);
 
-static Skillbar *get_skillbar_safe(GwClient *client, AgentId agent_id)
+Skillbar *get_skillbar_safe(World *world, AgentId agent_id)
 {
-    if (!(client && client->world.hash))
-        return NULL;
     Skillbar *sb;
-    array_foreach(sb, &client->world.skillbars) {
+    array_foreach(sb, &world->skillbars) {
         if (sb->owner_agent_id == agent_id)
             return sb;
     }
     return NULL;
 }
 
-static int get_skill_position(GwClient *client, AgentId agent_id, uint32_t skill_id)
+int get_skill_position(World *world, AgentId agent_id, uint32_t skill_id)
 {
-    Skillbar *sb = get_skillbar_safe(client, agent_id);
+    Skillbar *sb = get_skillbar_safe(world, agent_id);
     if (!sb) return -1;
     for (int i = 0; i < 8; i++) {
         if (sb->skills[i].skill_id == skill_id)
@@ -47,8 +45,9 @@ void HandleSkillbarUpdateSkill(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     UpdateSkill *pack = cast(UpdateSkill *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    Skillbar *sb = get_skillbar_safe(client, pack->agent_id);
+    Skillbar *sb = get_skillbar_safe(world, pack->agent_id);
     if (sb == NULL) {
         LogError("The agent %d doesn't have a skillbar.", pack->agent_id);
         return;
@@ -76,10 +75,11 @@ void HandleSkillbarUpdate(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     SkillbarUpdate *pack = cast(SkillbarUpdate *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    Skillbar *sb = get_skillbar_safe(client, pack->agent_id);
+    Skillbar *sb = get_skillbar_safe(world, pack->agent_id);
     if (sb == NULL) {
-        sb = array_push(&client->world.skillbars, 1);
+        sb = array_push(&world->skillbars, 1);
     }
 
     sb->owner_agent_id = pack->agent_id;
@@ -139,14 +139,15 @@ void HandleSkillActivated(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     SkillCancel *pack = cast(SkillCancel *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    Skillbar *sb = get_skillbar_safe(client, pack->agent_id);
+    Skillbar *sb = get_skillbar_safe(world, pack->agent_id);
     if (sb == NULL) {
         LogError("The agent %d doesn't have a skillbar.", pack->agent_id);
         return;
     }
 
-    skillbar_done_cast(sb, pack->skill_id);
+    skillbar_done_cast(world, sb, pack->skill_id);
 }
 
 void HandleSkillActivate(Connection *conn, size_t psize, Packet *packet)
@@ -167,7 +168,8 @@ void HandleSkillActivate(Connection *conn, size_t psize, Packet *packet)
     SkillActivate *pack = cast(SkillActivate *)packet;
     assert(client && client->game_srv.secured);
 
-    Skillbar *sb = get_skillbar_safe(client, pack->agent_id);
+    World *world = get_world_or_abort(client);
+    Skillbar *sb = get_skillbar_safe(world, pack->agent_id);
     if (sb == NULL) {
         LogError("The agent %d doesn't have a skillbar.", pack->agent_id);
         return;
@@ -201,7 +203,8 @@ void HandleSkillRecharge(Connection *conn, size_t psize, Packet *packet)
     SkillRecharge *pack = cast(SkillRecharge *)packet;
     assert(client && client->game_srv.secured);
 
-    Skillbar *sb = get_skillbar_safe(client, pack->agent_id);
+    World *world = get_world_or_abort(client);
+    Skillbar *sb = get_skillbar_safe(world, pack->agent_id);
     if (sb == NULL) {
         LogError("The agent %d doesn't have a skillbar.", pack->agent_id);
         return;
@@ -234,7 +237,8 @@ void HandleSkillRecharged(Connection *conn, size_t psize, Packet *packet)
     SkillRecharged *pack = cast(SkillRecharged *)packet;
     assert(client && client->game_srv.secured);
 
-    Skillbar *sb = get_skillbar_safe(client, pack->agent_id);
+    World *world = get_world_or_abort(client);
+    Skillbar *sb = get_skillbar_safe(world, pack->agent_id);
     if (sb == NULL) {
         LogError("The agent %d doesn't have a skillbar.", pack->agent_id);
         return;
@@ -263,14 +267,15 @@ void GameSrv_UseSkill(GwClient *client, int skill_id, uint32_t flags, AgentId ta
 
     assert(client && client->game_srv.secured);
 
-    Agent *caster = get_agent_safe(client, client->player_agent_id);
+    World *world = get_world_or_abort(client);
+    Agent *caster = get_agent_safe(world, world->player_agent_id);
     if (!caster) {
-        LogError("Can't get player agent '%d'", client->player_agent_id);
+        LogError("Can't get player agent '%d'", world->player_agent_id);
         return;
     }
 
-    Agent *target = get_agent_safe(client, target_id);
-    Skillbar *sb = get_skillbar_safe(client, client->player_agent_id);
+    Agent *target = get_agent_safe(world, target_id);
+    Skillbar *sb = get_skillbar_safe(world, world->player_agent_id);
     skillbar_start_cast(sb, skill_id, caster, target);
 
     UseSkill packet = NewPacket(GAME_CMSG_USE_SKILL);
@@ -290,15 +295,16 @@ void GameSrv_Attack(GwClient* client, AgentId target_id, bool call_target) {
     } Attack;
 #pragma pack(pop)
 
-    assert(client&& client->game_srv.secured);
+    assert(client && client->game_srv.secured);
 
-    Agent* player = get_agent_safe(client, client->player_agent_id);
+    World *world = get_world_or_abort(client);
+    Agent* player = get_agent_safe(world, world->player_agent_id);
     if (!player) {
-        LogError("Can't get player agent '%d'", client->player_agent_id);
+        LogError("Can't get player agent '%d'", world->player_agent_id);
         return;
     }
 
-    Agent* target = get_agent_safe(client, target_id);
+    Agent* target = get_agent_safe(world, target_id);
     if (!target) {
         LogError("Can't get target agent '%d'", target_id);
         return;
@@ -320,7 +326,11 @@ void GameSrv_LoadSkills(GwClient* client, AgentId agent_id, uint32_t* skill_ids)
         uint32_t skill_ids[8];
     } LoadSkills;
 #pragma pack(pop)
-    Agent* agent = get_agent_safe(client, agent_id);
+
+    assert(client && client->game_srv.secured);
+
+    World *world = get_world_or_abort(client);
+    Agent* agent = get_agent_safe(world, agent_id);
     if (!agent) {
         LogError("Can't get agent '%d'", agent_id);
         return;
@@ -348,7 +358,9 @@ void GameSrv_LoadAttributes(GwClient* client, AgentId agent_id, ArrayAttribute a
         uint32_t attribute_values[16];
     } LoadAttributes;
 #pragma pack(pop)
-    Agent* agent = get_agent_safe(client, agent_id);
+
+    World *world = get_world_or_abort(client);
+    Agent* agent = get_agent_safe(world, agent_id);
     if (!agent) {
         LogError("Can't get agent '%d'", agent_id);
         return;
@@ -378,9 +390,11 @@ void GameSrv_ChangeSecondary(GwClient* client, AgentId agent_id, Profession prof
         uint8_t profession;
     } ChangeSecondary;
 #pragma pack(pop)
-    assert(client&& client->game_srv.secured);
 
-    Agent* agent = get_agent_safe(client, agent_id);
+    assert(client && client->game_srv.secured);
+
+    World *world = get_world_or_abort(client);
+    Agent* agent = get_agent_safe(world, agent_id);
     if (!agent) {
         LogError("Can't get agent '%d'", agent_id);
         return;
@@ -414,13 +428,14 @@ void HandleHeroSkillStatus(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     SkillStatus *pack = cast(SkillStatus *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
     if (pack->pos < 0 && 7 < pack->pos) {
         LogError("Unvalid skill position %d", pack->pos);
         return;
     }
 
-    Skillbar *sb = get_skillbar_safe(client, pack->agent_id);
+    Skillbar *sb = get_skillbar_safe(world, pack->agent_id);
     if (sb == NULL) {
         LogError("The agent %d doesn't have a skillbar.", pack->agent_id);
         return;
@@ -445,9 +460,10 @@ void HandleHeroSkillStatusBitmap(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     SkillStatus *pack = cast(SkillStatus *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
     uint8_t bitmap = pack->bitmap;
-    Skillbar *sb = get_skillbar_safe(client, pack->agent_id);
+    Skillbar *sb = get_skillbar_safe(world, pack->agent_id);
     if (sb == NULL) {
         LogError("The agent %d doesn't have a skillbar.", pack->agent_id);
         return;
@@ -497,8 +513,9 @@ void HandleAgentUpdateAttribute(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     UpdateAttribute *pack = cast(UpdateAttribute *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    ArraySkillbar *skillbars = &client->world.skillbars;
+    ArraySkillbar *skillbars = &world->skillbars;
     Skillbar *sb;
     array_foreach(sb, skillbars) {
         if (sb->owner_agent_id == pack->agent_id)
@@ -527,7 +544,7 @@ void HandleAgentUpdateAttribute(Connection *conn, size_t psize, Packet *packet)
     }
 }
 
-static const char _Base64ToValue[128] = {
+const char _Base64ToValue[128] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // [0,   16)
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // [16,  32)
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, // [32,  48)
@@ -538,7 +555,7 @@ static const char _Base64ToValue[128] = {
     41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1, // [112, 128)
 };
 
-static void _WriteBits(int val, char* buff) {
+void _WriteBits(int val, char* buff) {
     buff[0] = ((val >> 0) & 1);
     buff[1] = ((val >> 1) & 1);
     buff[2] = ((val >> 2) & 1);
@@ -547,7 +564,7 @@ static void _WriteBits(int val, char* buff) {
     buff[5] = ((val >> 5) & 1);
 }
 
-static int _ReadBits(char** str, int n) {
+int _ReadBits(char** str, int n) {
     int val = 0;
     char* s = *str;
     for (int i = 0; i < n; i++)
@@ -556,7 +573,7 @@ static int _ReadBits(char** str, int n) {
     return val;
 }
 
-static SkillTemplate* template_decode(const char* temp) {
+SkillTemplate* template_decode(const char* temp) {
     const int SKILLS_MAX = 3431;
     const int ATTRIBUTE_MAX = 44;
 

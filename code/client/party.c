@@ -3,25 +3,29 @@
 #endif
 #define CORE_PARTY_C
 
-Player *get_player_safe(GwClient *client, uint32_t player_id)
+Player *get_player_safe(World *world, uint32_t player_id)
 {
-    if (!(client && client->ingame && client->world.hash))
-        return NULL;
-
-    ArrayPlayer *players = &client->world.players;
+    ArrayPlayer *players = &world->players;
     if (!array_inside(players, player_id))
         return NULL;
     return array_at(players, player_id);
 }
 
-Party *get_party_safe(GwClient *client, uint32_t party_id)
+Party *get_party_safe(World *world, uint32_t party_id)
 {
-    if (!(client && client->ingame && client->world.hash))
-        return NULL;
-    ArrayParty *parties = &client->world.parties;
+    ArrayParty *parties = &world->parties;
     if (!array_inside(parties, party_id))
         return NULL;
     return &array_at(parties, party_id);
+}
+
+Party *get_player_party_safe(World *world, uint32_t player_id)
+{
+    Player *player;
+    if ((player = get_player_safe(world, player_id)) == NULL) {
+        return NULL;
+    }
+    return get_party_safe(world, player->party_id);
 }
 
 PartyPlayer *get_party_player(Party *party, uint32_t player_id)
@@ -61,13 +65,14 @@ void HandlePartySetDifficulty(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     SetMode *pack = cast(SetMode *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    if (!(client->player && client->player->party)) {
-        LogError("The player is not int a party yet.");
+    Party *party;
+    if ((party = get_player_party_safe(world, world->player_id)) == NULL) {
+        LogWarn("Couldn't set player difficulty for player party, because the player party doesn't exist");
         return;
     }
-
-    Party *party = client->player->party;
+    
     switch ((Difficulty)pack->mode) {
         case Difficulty_Normal:
         case Difficulty_Hard:
@@ -99,9 +104,10 @@ void HandlePartyHeroAdd(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     HeroAdd *pack = cast(HeroAdd *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    assert(array_inside(&client->world.parties, pack->party_id));
-    Party *party = &array_at(&client->world.parties, pack->party_id);
+    assert(array_inside(&world->parties, pack->party_id));
+    Party *party = &array_at(&world->parties, pack->party_id);
 
     PartyHero *p_hero = array_push(&party->heroes, 1);
     if (!p_hero) {
@@ -133,7 +139,8 @@ void HandlePartyHeroRemove(Connection *conn, size_t psize, Packet *packet)
     HeroRemove *pack = cast(HeroRemove *)packet;
     assert(client && client->game_srv.secured);
 
-    Party *party = get_party_safe(client, pack->party_id);
+    World *world = get_world_or_abort(client);
+    Party *party = get_party_safe(world, pack->party_id);
     if (!party) {
         LogError("Party %d doesn't exist.", pack->party_id);
         return;
@@ -186,7 +193,8 @@ void HandlePartyJoinRequest(Connection *conn, size_t psize, Packet *packet)
     JoinRequest *pack = cast(JoinRequest *)packet;
     assert(client && client->game_srv.secured);
 
-    Party *party = get_party_safe(client, pack->party_id);
+    World *world = get_world_or_abort(client);
+    Party *party = get_party_safe(world, pack->party_id);
     if (party == NULL) {
         LogError("Received a party invite from unknow party. (party_id: %d)", pack->party_id);
         return;
@@ -271,11 +279,13 @@ void HandlePartyPlayerAdd(Connection *conn, size_t psize, Packet *packet)
     PlayerAdd *pack = cast(PlayerAdd *)packet;
     assert(client && client->game_srv.secured);
 
-    Party *party = get_party_safe(client, pack->party_id);
-    Player *player = get_player_safe(client, pack->player_id);
+    
+    World *world = get_world_or_abort(client);
+    Party *party = get_party_safe(world, pack->party_id);
+    Player *player = get_player_safe(world, pack->player_id);
     assert(player && party);
 
-    player->party = party;
+    player->party_id = party->party_id;
 
     PartyPlayer *party_player = array_push(&party->players, 1);
     if (!party_player) {
@@ -311,8 +321,9 @@ void HandlePartyPlayerRemove(Connection *conn, size_t psize, Packet *packet)
     PlayerRemove *pack = cast(PlayerRemove *)packet;
     assert(client && client->game_srv.secured);
 
-    Party *party = get_party_safe(client, pack->party_id);
-    Player *player = get_player_safe(client, pack->player_id);
+    World *world = get_world_or_abort(client);
+    Party *party = get_party_safe(world, pack->party_id);
+    Player *player = get_player_safe(world, pack->player_id);
     assert(player && party);
 
     size_t index = 0;
@@ -324,7 +335,7 @@ void HandlePartyPlayerRemove(Connection *conn, size_t psize, Packet *packet)
     }
 
     array_remove_ordered(&party->players, index);
-    player->party = NULL;
+    player->party_id = 0;
     party->player_count--;
 
     Event event;
@@ -350,13 +361,21 @@ void HandlePartyPlayerReady(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     PlayerReady *pack = cast(PlayerReady *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    Player *player = get_player_safe(client, pack->player_id);
-    assert(player && player->party);
+    Party *party = get_party_safe(world, pack->party_id);
+    if (party == NULL) {
+        LogWarn("Received GAME_SMSG_PARTY_PLAYER_READY for unknown party");
+        return;
+    }
 
-    PartyPlayer *p_player = get_party_player(player->party, pack->player_id);
-    assert(p_player);
-    p_player->ready = true;
+    PartyPlayer *player = get_party_player(party, pack->player_id);
+    if (player == NULL) {
+        LogWarn("Received GAME_SMSG_PARTY_PLAYER_READY for unknown party player");
+        return;
+    }
+
+    player->ready = true;
 }
 
 void HandlePartyCreate(Connection *conn, size_t psize, Packet *packet)
@@ -374,8 +393,9 @@ void HandlePartyCreate(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     PartyInfo *pack = cast(PartyInfo *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    ArrayParty *parties = &client->world.parties;
+    ArrayParty *parties = &world->parties;
     if (!array_inside(parties, pack->party_id)) {
         array_resize(parties, pack->party_id + 1);
         parties->size = parties->capacity;
@@ -413,13 +433,15 @@ void HandlePartyDefeated(Connection *conn, size_t psize, Packet *packet)
 
     GwClient *client = cast(GwClient *)conn->data;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    if (!(client->player && client->player->party)) {
+    Party *party;
+    if ((party = get_player_party_safe(world, world->player_id)) == NULL) {
         LogError("Player party got defeated before it was created.");
         return;
     }
 
-    client->player->party->defeated = true;
+    party->defeated = true;
 }
 
 void GameSrv_FlagHero(GwClient *client, Vec2f pos, AgentId hero_agent_id)

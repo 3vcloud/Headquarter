@@ -5,8 +5,8 @@
 
 void player_is_created(GwClient *client, AgentId agent_id)
 {
-    World *world = &client->world;
-    client->player_agent_id = agent_id;
+    World *world = get_world_or_abort(client);
+    world->player_agent_id = agent_id;
 
     assert(array_inside(&world->agents, agent_id));
     assert(array_at(&world->agents, agent_id));
@@ -16,9 +16,9 @@ void player_is_created(GwClient *client, AgentId agent_id)
         return;
 
     assert(array_inside(&world->players, me->player_id));
-    client->player = array_at(&world->players, me->player_id);
-
-    client->player->player_hero = &client->player_hero;
+    Player *player = world->players.data[me->player_id];
+    player->player_hero = client->player_hero; 
+    world->player_id = player->player_id;
 }
 
 void HandlePlayerAttrSet(Connection *conn, size_t psize, Packet *packet)
@@ -240,9 +240,10 @@ void GameSrv_DonateFaction(GwClient *client, FactionType faction, int amount)
 void GameSrv_PlayerLoadSkills(GwClient* client, uint32_t* skill_ids) {
     assert(client && client->game_srv.secured);
 
-    Agent* agent = get_agent_safe(client, client->player_agent_id);
+    World *world = get_world_or_abort(client);
+    Agent* agent = get_agent_safe(world, world->player_agent_id);
     if (!agent) {
-        LogError("Can't get player agent '%d'", client->player_agent_id);
+        LogError("Can't get player agent '%d'", world->player_agent_id);
         return;
     }
 
@@ -253,9 +254,10 @@ void GameSrv_PlayerLoadAttributes(GwClient* client, ArrayAttribute attributes)
 {
     assert(client && client->game_srv.secured);
 
-    Agent* agent = get_agent_safe(client, client->player_agent_id);
+    World *world = get_world_or_abort(client);
+    Agent* agent = get_agent_safe(world, world->player_agent_id);
     if (!agent) {
-        LogError("Can't get player agent '%d'", client->player_agent_id);
+        LogError("Can't get player agent '%d'", world->player_agent_id);
         return;
     }
 
@@ -266,9 +268,10 @@ void GameSrv_PlayerChangeSecondary(GwClient* client, Profession profession)
 {
     assert(client && client->game_srv.secured);
 
-    Agent* agent = get_agent_safe(client, client->player_agent_id);
+    World *world = get_world_or_abort(client);
+    Agent* agent = get_agent_safe(world, world->player_agent_id);
     if (!agent) {
-        LogError("Can't get player agent '%d'", client->player_agent_id);
+        LogError("Can't get player agent '%d'", world->player_agent_id);
         return;
     }
 

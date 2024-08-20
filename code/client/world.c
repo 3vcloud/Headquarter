@@ -3,9 +3,9 @@
 #endif
 #define CORE_WORLD_C
 
-static void init_world(World *world, uint32_t hash)
+void init_world(World *world, uint32_t hash)
 {
-    reset_world(world);
+    memset(world, 0, sizeof(*world));
 
     array_resize(&world->agents, 64);
     array_resize(&world->bags, 32);
@@ -15,16 +15,15 @@ static void init_world(World *world, uint32_t hash)
     array_resize(&world->parties, 8);
     array_resize(&world->players, 32);
     array_resize(&world->quests, 32);
+    array_resize(&world->titles, 64);
 
-    // @Enhancement:
-    // This would break if we had more than 8 skillbars.
-    // We use pointers to element in a array of Skillbar.
-    array_init(&world->skillbars);
+    init_guildmember_update(&world->guild_member_update);
 
+    world->player_count = 0;
     world->hash = hash;
 }
 
-static void reset_world(World *world)
+void free_world(World *world)
 {
     Item **item;
     array_foreach(item, &world->items) {
@@ -54,9 +53,17 @@ static void reset_world(World *world)
     array_reset(&world->parties);
     array_reset(&world->players);
     array_reset(&world->effects);
+    array_reset(&world->tmp_merchant_items);
+    array_reset(&world->tmp_merchant_prices);
+    array_reset(&world->merchant_items);
+    free_dialog_info(&world->dialog);
+    free_trade_session(&world->trade_session);
+}
 
-    world->player_count = 0;
-    world->hash = 0;
+void reset_world(World *world)
+{
+    free_world(world);
+    init_world(world, 0);
 }
 
 void world_update(World *world, msec_t diff)

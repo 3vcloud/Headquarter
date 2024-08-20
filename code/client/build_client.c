@@ -67,6 +67,7 @@
 
 #ifdef _WIN32
 #pragma warning(disable: 4100 4189)
+#pragma warning(disable: 4214) // nonstandard extension used: bit field types other than int
 #endif
 
 #include "arc4.h"
@@ -80,6 +81,7 @@
 
 // @Cleanup: Temporary
 typedef struct GwClient GwClient;
+typedef struct World World;
 
 typedef array(uint32_t) array_uint32_t;
 

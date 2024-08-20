@@ -18,14 +18,15 @@ void GameSrv_HeroUseSkill(GwClient *client, AgentId hero_id,
 
     assert(client && client->game_srv.secured);
 
-    Agent *caster = get_agent_safe(client, hero_id);
+    World *world = get_world_or_abort(client);
+    Agent *caster = get_agent_safe(world, hero_id);
     if (!caster) {
         LogError("Can't get hero agent '%d' when using skill %u", hero_id, skill_id);
         return;
     }
 
-    Agent *target = get_agent_safe(client, target_id);
-    Skillbar *sb = get_skillbar_safe(client, hero_id);
+    Agent *target = get_agent_safe(world, target_id);
+    Skillbar *sb = get_skillbar_safe(world, hero_id);
     skillbar_start_cast(sb, skill_id, caster, target);
 
     UseSkill packet = NewPacket(GAME_CMSG_HERO_USE_SKILL);
@@ -40,7 +41,14 @@ void GameSrv_HeroUseSkill(GwClient *client, AgentId hero_id,
 void GameSrv_HeroLoadSkills(GwClient* client, uint32_t hero_index, uint32_t skill_ids[8]) {
     assert(client && client->game_srv.secured);
 
-    ArrayPartyHero heroes = client->player->party->heroes;
+    World *world = get_world_or_abort(client);
+    Party *party;
+    if ((party = get_player_party_safe(world, world->player_id)) == NULL) {
+        LogWarn("Can't load skill for player hero, because the player isn't in a party that exist");
+        return;
+    }
+
+    ArrayPartyHero heroes = party->heroes;
     if (!array_inside(&heroes, hero_index))
         return;
     AgentId agent_id = heroes.data[hero_index].agent_id;
@@ -51,7 +59,14 @@ void GameSrv_HeroLoadSkills(GwClient* client, uint32_t hero_index, uint32_t skil
 void GameSrv_HeroLoadAttributes(GwClient* client, uint32_t hero_index, ArrayAttribute attributes) {
     assert(client && client->game_srv.secured);
 
-    ArrayPartyHero heroes = client->player->party->heroes;
+    World *world = get_world_or_abort(client);
+    Party *party;
+    if ((party = get_player_party_safe(world, world->player_id)) == NULL) {
+        LogWarn("Can't load skill for player hero, because the player isn't in a party that exist");
+        return;
+    }
+
+    ArrayPartyHero heroes = party->heroes;
     if (!array_inside(&heroes, hero_index))
         return;
     AgentId agent_id = heroes.data[hero_index].agent_id;
@@ -62,7 +77,14 @@ void GameSrv_HeroLoadAttributes(GwClient* client, uint32_t hero_index, ArrayAttr
 void GameSrv_HeroChangeSecondary(GwClient* client, uint32_t hero_index, Profession profession) {
     assert(client && client->game_srv.secured);
 
-    ArrayPartyHero heroes = client->player->party->heroes;
+    World *world = get_world_or_abort(client);
+    Party *party;
+    if ((party = get_player_party_safe(world, world->player_id)) == NULL) {
+        LogWarn("Can't load skill for player hero, because the player isn't in a party that exist");
+        return;
+    }
+
+    ArrayPartyHero heroes = party->heroes;
     if (!array_inside(&heroes, hero_index))
         return;
     AgentId agent_id = heroes.data[hero_index].agent_id;

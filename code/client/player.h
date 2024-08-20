@@ -19,29 +19,27 @@ typedef struct PlayerHero {
 } PlayerHero;
 
 typedef struct Player {
-    uint32_t    player_id;
-    AgentId     agent_id;
-
+    uint32_t        player_id;
+    AgentId         agent_id;
     struct kstr_hdr name;
-    uint16_t name_buffer[64];
-
-    Guild      *guild;
-    Party      *party;
-    PlayerHero *player_hero;
+    uint16_t        name_buffer[64];
+    size_t          guild_id;
+    size_t          party_id;
+    PlayerHero      player_hero;
 
     // @Remark: to test if a profession is unlocked do ((1 << prof_id) & unlocked_profession) != 0
     int32_t unlocked_profession;
 } Player;
 typedef array(Player *) ArrayPlayer;
 
-static void api_make_player(ApiPlayer *dest, Player *src)
+void api_make_player(ApiPlayer *dest, Player *src)
 {
     dest->player_id = src->player_id;
     dest->agent_id  = src->agent_id;
-    dest->guild_id  = src->guild ? src->guild->guild_id : 0;
+    dest->guild_id  = src->guild_id;
 }
 
-static void init_player(Player *player)
+void init_player(Player *player)
 {
     kstr_hdr_init(&player->name, player->name_buffer, ARRAY_SIZE(player->name_buffer));
 }

@@ -3,14 +3,6 @@
 #endif
 #define CORE_CLIENT_H
 
-typedef struct SalvageSession {
-    uint16_t    salvage_session_id;
-    bool        is_open;
-
-    uint32_t    n_upgrades;
-    Item       *upgrades[3];
-} SalvageSession;
-
 typedef enum AsyncType {
     AsyncType_None,
     AsyncType_AccountLogin,
@@ -118,34 +110,15 @@ typedef struct GwClient {
     ArrayAsyncRequest   requests;
 
     PlayerStatus        player_status;
-    AgentId             player_agent_id;
 
     FriendArray         friends;
     CharacterArray      characters;
-    Character          *current_character;
-    Character          *pending_character;
-
-    GuildMemberUpdate   guild_member_update;
+    size_t              current_character_idx;
+    size_t              pending_character_idx;
 
     Chat                chat;
     World               world;
-
-    ArrayTitle          titles;
-    ArrayQuest          quests;
-    Inventory           inventory;
-    Player             *player;
-
     EventManager        event_mgr;
-
-    ArrayItem           tmp_merchant_items;
-    array_uint32_t      tmp_merchant_prices;
-    ArrayItem           merchant_items;
-    AgentId             merchant_agent_id;
-    AgentId             interact_with;
-
-    DialogInfo          dialog;
-    TradeSession        trade_session;
-    SalvageSession      salvage_session;
 
     // @Remark:
     // We receive those information before we know the player id, so we store
@@ -160,12 +133,18 @@ typedef struct GwClient {
 extern GwClient *client;
 
 void init_client(GwClient *client);
+
+World* get_world(GwClient *client);
+World* get_world_or_abort(GwClient *client);
+
 uint32_t issue_next_transaction(GwClient *client, AsyncType type);
 uint32_t find_map_type_from_map_id(uint32_t map_id);
 
 void client_frame_update(GwClient *client, msec_t diff);
 
 void compute_pswd_hash(struct kstr *email, struct kstr *pswd, char digest[20]);
+
+Character* GetCharacter(GwClient *client, uint32_t char_id);
 
 // If `pswd` is NULL, it will use the hash in `client->password`
 void AccountLogin(GwClient *client);

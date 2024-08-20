@@ -8,10 +8,8 @@ typedef struct Agent {
     AgentType       type;
     bool            spawned;
 
-    struct Agent   *attacking;
-    struct Player  *player;
-    struct Party   *party;
-
+    uint32_t        attacking_agent_id;
+    uint32_t        party_id;
     uint32_t        npc_id;
     uint32_t        item_id;
     uint32_t        gadget_id;
@@ -47,27 +45,23 @@ typedef struct Agent {
 
     int32_t         level;
     AgentMarker     marker;
-
-    struct Skill   *casting;
+    uint32_t        casting_skill_id;
 } Agent;
 typedef array(Agent *) ArrayAgent;
 
-static inline void
-agent_set_casting(Agent *agent, struct Skill *casting)
+void agent_set_casting(Agent *agent, uint32_t casting_skill_id)
 {
     assert(agent);
-    agent->casting = casting;
+    agent->casting_skill_id = casting_skill_id;
 }
 
-static inline AgentId
-agent_get_id(Agent *agent)
+AgentId agent_get_id(Agent *agent)
 {
     assert(agent);
     return agent->agent_id;
 }
 
-static inline void
-agent_stop_moving(Agent *agent)
+void agent_stop_moving(Agent *agent)
 {
     agent->speed = 0.f;
     agent->moving = false;
@@ -78,8 +72,7 @@ agent_stop_moving(Agent *agent)
     agent->destination.y = 0.f;
 }
 
-static inline void
-agent_update_api(Agent *agent)
+void agent_update_api(Agent *agent)
 {
     float speed = agent->speed_base * agent->speed_modifier;
     agent->speed = speed;
@@ -87,9 +80,9 @@ agent_update_api(Agent *agent)
     agent->velocity.y = agent->direction.y * speed;
 }
 
-static inline bool agent_is_dead(Agent *a) { return (a->effects & AgentEffect_Dead) != 0; }
+bool agent_is_dead(Agent *a) { return (a->effects & AgentEffect_Dead) != 0; }
 
-static void api_make_agent(ApiAgent *dest, Agent *src)
+void api_make_agent(ApiAgent *dest, Agent *src)
 {
     dest->agent_id  = src->agent_id;
     dest->type      = src->type;
@@ -104,4 +97,4 @@ static void api_make_agent(ApiAgent *dest, Agent *src)
     dest->energy_max = src->energy_max;
 }
 
-static Agent *get_agent_safe(GwClient *client, AgentId id);
+Agent *get_agent_safe(World *world, AgentId id);

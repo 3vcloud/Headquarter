@@ -3,11 +3,9 @@
 #endif
 #define CORE_GUILD_C
 
-Guild *get_guild_safe(GwClient *client, uint32_t guild_id)
+Guild *get_guild_safe(World *world, uint32_t guild_id)
 {
-    if (!(client && client->ingame && client->world.hash))
-        return NULL;
-    ArrayGuild guilds = client->world.guilds;
+    ArrayGuild guilds = world->guilds;
     if (!array_inside(&guilds, guild_id))
         return NULL;
     Guild *guild = &array_at(&guilds, guild_id);
@@ -16,11 +14,25 @@ Guild *get_guild_safe(GwClient *client, uint32_t guild_id)
     return guild;
 }
 
-void init_guildmember_update(GwClient *client)
+Guild *get_player_guild_safe(World *world, uint32_t player_id)
 {
-    GuildMemberUpdate *gmu = &client->guild_member_update;
+    Player *player;
+    if ((player = get_player_safe(world, player_id)) == NULL) {
+        return NULL;
+    }
+    return get_guild_safe(world, player->guild_id);
+}
+
+void init_guildmember_update(GuildMemberUpdate *gmu)
+{
+    memset(gmu, 0, sizeof(*gmu));
     kstr_hdr_init(&gmu->player_name, gmu->player_name_buffer, ARRAY_SIZE(gmu->player_name_buffer));
-    reset_guildmember_update(client);
+    reset_guildmember_update(gmu);
+}
+
+void reset_guildmember_update(GuildMemberUpdate* gmu)
+{
+    memset(gmu, 0, sizeof(*gmu));
 }
 
 void calc_last_login(GuildMember *member, uint32_t minutes_since_login)
@@ -32,24 +44,20 @@ void calc_last_login(GuildMember *member, uint32_t minutes_since_login)
     member->last_login_utc = last_login_utc;
 }
 
-GuildMember *complete_guildmember_update(GwClient *client, uint16_t *account_name, size_t capacity)
+GuildMember *complete_guildmember_update(World *world, struct kstr account_name)
 {
-    GuildMemberUpdate* gmu = &client->guild_member_update;
+    Guild *guild;
+    if ((guild = get_player_guild_safe(world, world->player_id)) == NULL) {
+        LogWarn("Couldn't complete a guild member update, because we couldn't get the player guild");
+        return NULL;
+    }
+
+    GuildMemberUpdate* gmu = &world->guild_member_update;
     GuildMember* member = NULL;
-    //if (!gmu->pending)
-   //     goto leave;
-    assert(gmu->pending && client->player->guild);
-    
-    size_t length = 0;
-    for (length = 0; length < capacity && account_name[length]; length++) {}
 
-    assert(length);
-
-    struct kstr account_name_kstr;
-    kstr_init(&account_name_kstr, account_name, length, capacity);
-    
-    array_foreach(member, &client->player->guild->members) {
-        if (kstr_hdr_compare_kstr(&member->account_name, &account_name_kstr) != 0)
+    assert(gmu->pending && world->player_id);
+    array_foreach(member, &guild->members) {
+        if (kstr_hdr_compare_kstr(&member->account_name, &account_name) != 0)
             continue;
         if (gmu->status >= 0) {
             // Status changed e.g. online
@@ -70,18 +78,8 @@ GuildMember *complete_guildmember_update(GwClient *client, uint16_t *account_nam
     }
     member = NULL;
 leave:
-    reset_guildmember_update(client);
+    reset_guildmember_update(&world->guild_member_update);
     return member;
-}
-
-void reset_guildmember_update(GwClient *client)
-{
-    GuildMemberUpdate* gmu = &client->guild_member_update;
-    gmu->pending = false;
-    gmu->member_type = 0;
-    gmu->status = 0;
-    gmu->player_name.length = 0;
-    gmu->minutes_since_login = 0;
 }
 
 void init_guild(Guild *guild)
@@ -126,8 +124,9 @@ void HandleGuildPlayerRole(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     PlayerRole *pack = cast(PlayerRole *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    ArrayGuild *guilds = &client->world.guilds;
+    ArrayGuild *guilds = &world->guilds;
     if (!array_inside(guilds, pack->guild_id)) {
         LogError("The player guild (id: %d) is out of bound of the guild array (size: %d)",
             pack->guild_id, guilds->size);
@@ -135,11 +134,15 @@ void HandleGuildPlayerRole(Connection *conn, size_t psize, Packet *packet)
     }
 
     Guild *guild = &array_at(guilds, pack->guild_id);
-    if (client->player) client->player->guild = guild;
-    if (pack->member_type > 2) {
-        // We can see this guild's members - prepare the array to receive the feed.
-        array_init(&guild->members);
+    array_init(&guild->members);
+
+    Player *player;
+    if ((player = get_player_safe(world, world->player_id)) == NULL) {
+        LogWarn("Coulnd't set the player guild id, because the player doesn't exist");
+        return;
     }
+
+    player->guild_id = guild->guild_id;
 }
 
 void HandleGuildChangePlayerStatus(Connection* conn, size_t psize, Packet* packet)
@@ -158,11 +161,13 @@ void HandleGuildChangePlayerStatus(Connection* conn, size_t psize, Packet* packe
 
     GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerStatusChange* pack = cast(GuildPlayerStatusChange*)packet;
-    assert(client&& client->game_srv.secured);
+    assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
+
     //reset_guildmember_update(&client);
-    client->guild_member_update.minutes_since_login = pack->minutes_since_login;
-    client->guild_member_update.status = pack->status;
-    client->guild_member_update.pending = true;
+    world->guild_member_update.minutes_since_login = pack->minutes_since_login;
+    world->guild_member_update.status = pack->status;
+    world->guild_member_update.pending = true;
 }
 
 void HandleGuildChangePlayerType(Connection* conn, size_t psize, Packet* packet) {
@@ -179,10 +184,12 @@ void HandleGuildChangePlayerType(Connection* conn, size_t psize, Packet* packet)
 
     GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerTypeChange* pack = cast(GuildPlayerTypeChange*)packet;
-    assert(client&& client->game_srv.secured);
+    assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
+
     //reset_guildmember_update(&client);
-    client->guild_member_update.member_type = pack->member_type;
-    client->guild_member_update.pending = true;
+    world->guild_member_update.member_type = pack->member_type;
+    world->guild_member_update.pending = true;
 }
 
 void HandleGuildChangePlayerContext(Connection* conn, size_t psize, Packet* packet)
@@ -220,9 +227,13 @@ void HandleGuildPlayerChangeComplete(Connection* conn, size_t psize, Packet* pac
 
     GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerStatusChange* pack = cast(GuildPlayerStatusChange*)packet;
-    assert(client&& client->game_srv.secured);
+    assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    GuildMember* member = complete_guildmember_update(client, pack->account_name, ARRAY_SIZE(pack->account_name));
+    struct kstr account_name;
+    kstr_init_from_null_terminated(&account_name, pack->account_name, ARRAY_SIZE(pack->account_name));
+
+    GuildMember* member = complete_guildmember_update(world, account_name);
     if (member && !list_empty(&client->event_mgr.callbacks[EventType_GuildMemberUpdated])) {
         Event event;
         Event_Init(&event, EventType_GuildMemberUpdated);
@@ -253,40 +264,46 @@ void HandleGuildPlayerInfo(Connection* conn, size_t psize, Packet* packet)
 
     GwClient *client = cast(GwClient*)conn->data;
     GuildPlayerInfo* pack = cast(GuildPlayerInfo*)packet;
-
-    //wchar_t invited_name[40]
     assert(client && client->game_srv.secured);
-    assert(client->player->guild);
+    World *world = get_world_or_abort(client);
+
+    Guild *guild;
+    if ((guild = get_player_guild_safe(world, world->player_id)) == NULL) {
+        LogError("Expected the player guild to exist, but it doesn't");
+        return;
+    }
+
+    struct kstr invited_by;
+    kstr_init_from_null_terminated(&invited_by, pack->invited_by, ARRAY_SIZE(pack->invited_by));
+
     GuildMember* member;
-    GuildMember* found = NULL;
-    struct kstr invname_kstr;
-    size_t length;
-    for (length = 0; length < sizeof(pack->account_name) && pack->account_name[length]; length++) {}
-    kstr_init(&invname_kstr, pack->account_name, length, ARRAY_SIZE(pack->account_name));
-    array_foreach(member, &client->player->guild->members) {
-        if (found)
+    array_foreach(member, &guild->members) {
+        if (kstr_hdr_compare_kstr(&member->account_name, &invited_by) == 0)
             break;
-        if (kstr_hdr_compare_kstr(&member->account_name, &invname_kstr) != 0)
-            break;
-        found = member;
     }
-    if (!found) {
-        found = array_push(&client->player->guild->members,1);
-        init_guildmember(found);
-        //found->join_date = pack->join_date;
-        kstr_hdr_copy_from_kstr(&found->account_name, &invname_kstr);
+
+    if (member == array_end(&guild->members)) {
+        member = array_push(&guild->members, 1);
+        init_guildmember(member);
+        // member->join_date = pack->join_date;
+        kstr_hdr_copy_from_kstr(&member->account_name, &invited_by);
     }
-    kstr_hdr_read(&found->player_name, pack->player_name, ARRAY_SIZE(pack->player_name));
-    found->status = pack->status;
-    found->member_type = pack->member_type;
-    calc_last_login(found, pack->minutes_since_login);
-    //found->last_login_date = 0;
-    //LogInfo("Guild member added: %ls (%ls), unk %d, type %d, status %d", 
-    //    found->account_name_buffer, found->player_name_buffer, pack->unk, found->member_type, found->status);
+
+    struct kstr player_name;
+    kstr_init_from_null_terminated(&player_name, pack->player_name, ARRAY_SIZE(pack->player_name));
+    kstr_hdr_copy_from_kstr(&member->player_name, &player_name);
+
+    member->status = pack->status;
+    member->member_type = pack->member_type;
+    calc_last_login(member, pack->minutes_since_login);
+    // member->last_login_date = 0;
+    // LogInfo("Guild member added: %ls (%ls), unk %d, type %d, status %d", 
+    //     member->account_name_buffer, member->player_name_buffer, pack->unk, member->member_type, member->status);
+
     if (!list_empty(&client->event_mgr.callbacks[EventType_GuildMemberUpdated])) {
         Event event;
         Event_Init(&event, EventType_GuildMemberUpdated);
-        api_make_guild_member(&event.GuildMemberUpdated.member, found);
+        api_make_guild_member(&event.GuildMemberUpdated.member, member);
         broadcast_event(&client->event_mgr, &event);
     }
 }
@@ -324,8 +341,9 @@ void HandleGuildGeneralInfo(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     GuildInfo *pack = cast(GuildInfo *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    ArrayGuild *guilds = &client->world.guilds;
+    ArrayGuild *guilds = &world->guilds;
     if ((size_t)pack->guild_id >= guilds->size) {
         array_resize(guilds, pack->guild_id + 1);
         guilds->size = guilds->capacity;
@@ -367,14 +385,15 @@ void HandleGuildChangeFaction(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     Payload *pack = cast(Payload *)packet;
     assert(client && client->game_srv.secured);
+    World *world = get_world_or_abort(client);
 
-    ArrayGuild *guilds = &client->world.guilds;
+    ArrayGuild *guilds = &world->guilds;
     if (!array_inside(guilds, pack->guild_id)) {
         LogError("The guild (id: %d) is out of bound (size: %d)", pack->guild_id, guilds->size);
         return;
     }
 
-    Guild *guild = &array_at(&client->world.guilds, pack->guild_id);
+    Guild *guild = &array_at(&world->guilds, pack->guild_id);
     if (pack->allegiance < FactionType_Count) {
         guild->allegiance = (FactionType)pack->allegiance;
     } else {
