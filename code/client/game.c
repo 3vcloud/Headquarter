@@ -732,7 +732,9 @@ void GameSrv_PingReply(Connection *conn)
 void GameSrv_PingRequest(Connection *conn)
 {
     GwClient *client = cast(GwClient *)conn->data;
-    World *world = get_world_or_abort(client);
+    World *world = get_world(client);
+    if (!world)
+        return;
     conn->ping = world->world_time;
 
     Packet packet = NewPacket(GAME_CMSG_PING_REQUEST);
