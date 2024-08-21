@@ -591,6 +591,11 @@ void HandleAgentDestroyPlayer(Connection* conn, size_t psize, Packet* packet)
     game_object_free(&client->object_mgr, &player->object);*/
 
     world->player_count--;
+
+    Event params;
+    Event_Init(&params, EventType_AgentDestroyPlayer);
+    params.AgentDestroyPlayer.player_id = pack->player_id;
+    broadcast_event(&client->event_mgr, &params);
 }
 
 void HandleAgentCreatePlayer(Connection *conn, size_t psize, Packet *packet)
