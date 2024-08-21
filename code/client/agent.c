@@ -486,8 +486,8 @@ void HandleAgentUpdateRotation(Connection *conn, size_t psize, Packet *packet)
     UpdateRotation *pack = cast(UpdateRotation *)packet;
     assert(client && client->game_srv.secured);
 
-    World *world = get_world_or_abort(client);
-    Agent *agent = get_agent_safe(world, pack->agent_id);
+    World *world = get_world(client);
+    Agent *agent = world ? get_agent_safe(world, pack->agent_id) : NULL;
     if (!agent) {
         LogError("AgentUpdateRotation received before then agent %d spawn.", pack->agent_id);
         return;
