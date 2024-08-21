@@ -116,7 +116,7 @@ void HandleGameTransferInfo(Connection *conn, size_t psize, Packet *packet)
     assert(client && client->game_srv.secured);
     World *world = get_world_or_abort(client);
 
-    world->region = pack->region;
+    client->region = pack->region;
     struct sockaddr host;
     memcpy(&host, pack->host, sizeof(host));
     start_loading_new_zone(client, &host, pack->map_id, pack->world_id, pack->player_id);
@@ -251,7 +251,7 @@ void extract_district(
     default: {
         World *world;
         if ((world = get_world(client)) != NULL) {
-            *region = world->region;
+            *region = client->region;
             *language = world->language;
         } else {
             *region = 0;

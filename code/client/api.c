@@ -283,7 +283,7 @@ HQAPI District GetDistrict(void)
         return DISTRICT_CURRENT;
     }
 
-    region = world->region;
+    region = client->region;
     language = world->language;
     
     thread_mutex_unlock(&client->mutex);
@@ -367,7 +367,7 @@ HQAPI DistrictRegion GetDistrictRegion(void)
     World* world;
     if ((world = get_world(client)) == NULL)
         goto leave;
-    district_region = world->region;
+    district_region = client->region;
 leave:
     thread_mutex_unlock(&client->mutex);
     return district_region;

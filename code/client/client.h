@@ -105,6 +105,7 @@ typedef struct GwClient {
     uint32_t            world_id;
     uint32_t            player_id;
     uint32_t            static_salt;
+    DistrictRegion      region;
 
     uint32_t            next_transaction_id;
     ArrayAsyncRequest   requests;
