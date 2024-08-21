@@ -99,7 +99,7 @@ HQAPI DistrictRegion    GetDistrictRegion(void);
 HQAPI void              Travel(uint32_t map_id, District district, uint16_t district_number);
 HQAPI void              TravelHall(uint32_t guild_id);
 HQAPI void              LeaveHall(void);
-HQAPI void              RedirectMap(uint32_t map_id, District district, int district_number);
+HQAPI void              RedirectMap(uint32_t map_id);
 HQAPI bool              IsMapUnlocked(uint32_t map_id);
 HQAPI size_t            GetMapsUnlocked(uint32_t* buffer, size_t length);
 
