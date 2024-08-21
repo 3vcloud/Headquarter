@@ -65,7 +65,14 @@ void HandleAgentPartySize(Connection* conn, size_t psize, Packet* packet) {
     AgentPartySize* pack = cast(AgentPartySize*)packet;
     assert(client&& client->game_srv.secured);
     World* world = get_world_or_abort(client);
-    assert(array_inside(&world->players, pack->player_id));
+    if (!pack->player_id) {
+        log_warn("HandleAgentPartySize: packet {%d, %d} received, but invalid player number", pack->player_id, pack->size);
+        return;
+    }
+    if (!array_inside(&world->players, pack->player_id)) {
+        log_warn("HandleAgentPartySize: packet {%d, %d} received, but no player %d", pack->player_id, pack->size, pack->player_id);
+        return;
+    }
 
     Event params;
     Event_Init(&params, EventType_PlayerPartySize);
