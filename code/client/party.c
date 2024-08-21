@@ -63,12 +63,12 @@ void HandleAgentPartySize(Connection* conn, size_t psize, Packet* packet) {
 
     GwClient* client = cast(GwClient*)conn->data;
     AgentPartySize* pack = cast(AgentPartySize*)packet;
-    assert(client&& client->game_srv.secured);
-    World* world = get_world_or_abort(client);
     if (!pack->player_id) {
-        log_warn("HandleAgentPartySize: packet {%d, %d} received, but invalid player number", pack->player_id, pack->size);
+        // Theres a gw server bug - it destroys the player and then sends this packet afterwards in error.
         return;
     }
+    assert(client&& client->game_srv.secured);
+    World* world = get_world_or_abort(client);
     if (!array_inside(&world->players, pack->player_id)) {
         log_warn("HandleAgentPartySize: packet {%d, %d} received, but no player %d", pack->player_id, pack->size, pack->player_id);
         return;
