@@ -58,7 +58,7 @@ void agent_set_distination(Agent *agent, Vec2f dest)
 
 Agent *get_agent_safe(World *world, AgentId id)
 {
-    if (id == 0) {
+    if (!(world && id)) {
         return NULL;
     }
     ArrayAgent agents = world->agents;
@@ -523,7 +523,7 @@ void HandleAgentMoveToPoint(Connection *conn, size_t psize, Packet *packet)
     Destination *pack = cast(Destination *)packet;
     assert(client && client->game_srv.secured);
 
-    World *world = get_world_or_abort(client);
+    World *world = get_world(client);
 
     // @Cleanup:
     // It happend to receive a `MoveToPoint` before spawning an agent.

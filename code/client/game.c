@@ -26,15 +26,18 @@ void HandlePingReply(Connection *conn, size_t psize, Packet *packet)
     PingReply *pack = cast(PingReply *)packet;
     (void)pack;
 
-    World *world = get_world_or_abort(client);
-
+    
     // @Remark:
     // In PingReply packet we send/receive the "reaction" of our code
     // (i.e. the time in ms that it take to start receiving new input)
     // So the actual ping (from send to recv) should be between
     // [latency/2 - srv->reaction - clt->reaction, latency/2 + srv->reaction + clt->reaction]
-    conn->pong = world->world_time;
-    conn->latency = conn->pong - conn->ping;
+    World* world = get_world(client);
+    if (world) {
+        conn->pong = world->world_time;
+        conn->latency = conn->pong - conn->ping;
+    }
+
     // printf("latency %lu, pack {ping: %d}\n", conn->latency, pack->ping);
 }
 
