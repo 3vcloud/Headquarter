@@ -149,7 +149,9 @@ void HandleAgentMovementTick(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     MovementTick *pack = cast(MovementTick *)packet;
     assert(client && client->game_srv.secured);
-    World *world = get_world_or_abort(client);
+    World *world = get_world(client);
+    if (!world)
+        return; // This can happen if we've just started travelling!
 
     world->time_server += pack->delta;
 
