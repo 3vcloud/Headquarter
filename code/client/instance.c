@@ -86,9 +86,10 @@ void HandleGameServerInfo(Connection *conn, size_t psize, Packet *packet)
     assert(client);
 
     assert(client->state == AwaitGameServerInfo);
-    client->region = client->pending_region;
+    if(client->pending_region)
+        client->region = client->pending_region;
 
-    LogDebug("HandleGameServerInfo { world_id %d, map_id %d, player_id %d }", pack->world_id, pack->map_id, pack->player_id);
+    LogDebug("HandleGameServerInfo { map_id %d, region = %d }", pack->map_id, client->region);
 
     struct sockaddr host;
     memcpy(&host, pack->host, sizeof(host));
@@ -117,7 +118,7 @@ void HandleGameTransferInfo(Connection *conn, size_t psize, Packet *packet)
     assert(client && client->game_srv.secured);
     World *world = get_world_or_abort(client);
 
-    LogDebug("HandleGameTransferInfo { region %d, map_id %d, player_id %d }", pack->region, pack->map_id);
+    LogDebug("HandleGameTransferInfo { region %d, map_id %d }", pack->region, pack->map_id);
 
 
     client->region = pack->region;

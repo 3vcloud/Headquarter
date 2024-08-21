@@ -327,8 +327,13 @@ void AuthSrv_RequestInstance(Connection *conn, uint32_t trans_id,
     packet.district = district;
     packet.language = language;
 
-    client->pending_region = region;
+    if (region)
+        client->pending_region = region;
+    else
+        client->pending_region = 0;
     client->state = AwaitGameServerInfo;
+
+    LogDebug("AuthSrv_RequestInstance: map %d, district_region %d, district_number %d, language %d", packet.map_id, packet.region, packet.district, packet.language);
 
     SendPacket(conn, sizeof(packet), &packet);
 }
