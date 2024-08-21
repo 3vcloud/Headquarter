@@ -26,7 +26,7 @@ typedef enum EventType {
     EventType_WorldMapEnter,
     EventType_WorldMapLeave,
     EventType_PlayerPartySize,
-    EventType_AgentDestroyPlayer,
+    EventType_AgentDespawned,
 
     EventType_Count
 } EventType;
@@ -109,8 +109,8 @@ typedef struct Event {
             uint8_t size;
         } PlayerPartySize;
         struct {
-            int32_t player_id;
-        } AgentDestroyPlayer;
+            AgentId agent_id;
+        } AgentDespawned;
     };
 } Event;
 
