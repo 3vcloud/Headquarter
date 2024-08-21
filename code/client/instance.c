@@ -86,8 +86,7 @@ void HandleGameServerInfo(Connection *conn, size_t psize, Packet *packet)
     assert(client);
 
     assert(client->state == AwaitGameServerInfo);
-    if(client->pending_region)
-        client->region = client->pending_region;
+    client->region = client->pending_region;
 
     LogDebug("HandleGameServerInfo { map_id %d, region = %d }", pack->map_id, client->region);
 
