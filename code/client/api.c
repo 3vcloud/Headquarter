@@ -92,20 +92,17 @@ HQAPI void LogTrace(const char *fmt, ...)
 
 HQAPI void FreePluginAndExitThread(PluginObject *plugin, int retval)
 {
-    assert(client != NULL);
+    assert(client != NULL && plugin != NULL);
     thread_mutex_lock(&client->mutex);
-    if (plugin) {
-        Plugin* it;
-        plugin_foreach(it) {
-            if (it->module == plugin->module) {
-                plugin_unload(it);
-                break;
-            }
+    Plugin *it;
+    plugin_foreach(it) {
+        if (it->module == plugin->module) {
+            plugin_unload(it);
+            break;
         }
     }
     thread_mutex_unlock(&client->mutex);
     thread_exit(retval);
-    
 }
 
 HQAPI size_t GetPlugins(ApiPlugin *buffer, size_t length)
@@ -231,13 +228,14 @@ leave:
     return map_id;
 } 
 
-HQAPI size_t GetMapsUnlocked(uint32_t* buffer, size_t length)
+HQAPI size_t GetMapsUnlocked(uint32_t *buffer, size_t length)
 {
     assert(client != NULL);
 
     size_t written = 0;
     thread_mutex_lock(&client->mutex);
-    if (!(client->ingame && client->world.hash))
+    World *world;
+    if ((world = get_world(client)) == NULL)
         goto leave;
     if (buffer) {
         if (client->player_hero.maps_unlocked.size > length)
@@ -255,7 +253,8 @@ HQAPI bool IsMapUnlocked(uint32_t map_id)
     assert(client != NULL);
     bool ret = false;
     thread_mutex_lock(&client->mutex);
-    if (!(client->ingame && client->world.hash))
+    World *world;
+    if ((world = get_world(client)) == NULL)
         goto leave;
     uint32_t real_index = map_id / 32;
     if (real_index >= array_size(&client->player_hero.maps_unlocked))
@@ -273,66 +272,65 @@ HQAPI District GetDistrict(void)
     assert(client != NULL);
 
     District district = DISTRICT_CURRENT;
-    switch (GetDistrictRegion()) {
+    DistrictRegion region;
+    DistrictLanguage language;
+
+    thread_mutex_lock(&client->mutex);
+
+    World *world;
+    if ((world = get_world(client)) == NULL) {
+        thread_mutex_unlock(&client->mutex);
+        return DISTRICT_CURRENT;
+    }
+
+    region = world->region;
+    language = world->language;
+    
+    thread_mutex_unlock(&client->mutex);
+    switch (region) {
     case DistrictRegion_International:
-        return DISTRICT_INTERNATIONAL;
+        district = DISTRICT_INTERNATIONAL;
+        break;
     case DistrictRegion_America:
-        return DISTRICT_AMERICAN;
+        district = DISTRICT_AMERICAN;
+        break;
     case DistrictRegion_Korea:
-        return DISTRICT_ASIA_KOREAN;
+        district = DISTRICT_ASIA_KOREAN;
+        break;
     case DistrictRegion_Europe:
-        switch (GetDistrictLanguage()) {
+        switch (language) {
         case DistrictLanguage_English:
-            return DISTRICT_EUROPE_ENGLISH;
+            district = DISTRICT_EUROPE_ENGLISH;
+            break;
         case DistrictLanguage_French:
-            return DISTRICT_EUROPE_FRENCH;
+            district = DISTRICT_EUROPE_FRENCH;
+            break;
         case DistrictLanguage_German:
-            return DISTRICT_EUROPE_GERMAN;
+            district = DISTRICT_EUROPE_GERMAN;
+            break;
         case DistrictLanguage_Italian:
-            return DISTRICT_EUROPE_ITALIAN;
+            district = DISTRICT_EUROPE_ITALIAN;
+            break;
         case DistrictLanguage_Spanish:
-            return DISTRICT_EUROPE_SPANISH;
+            district = DISTRICT_EUROPE_SPANISH;
+            break;
         case DistrictLanguage_Polish:
-            return DISTRICT_EUROPE_POLISH;
+            district = DISTRICT_EUROPE_POLISH;
+            break;
         case DistrictLanguage_Russian:
-            return DISTRICT_EUROPE_RUSSIAN;
+            district = DISTRICT_EUROPE_RUSSIAN;
+            break;
         }
         break;
     case DistrictRegion_China:
-        return DISTRICT_ASIA_CHINESE;
+        district = DISTRICT_ASIA_CHINESE;
+        break;
     case DistrictRegion_Japanese:
-        return DISTRICT_ASIA_JAPANESE;
+        district = DISTRICT_ASIA_JAPANESE;
+        break;
     }
 
     return district;
-}
-
-HQAPI DistrictLanguage GetDistrictLanguage(void)
-{
-    assert(client != NULL);
-    DistrictLanguage district_language = DistrictLanguage_Default;
-    thread_mutex_lock(&client->mutex);
-    World* world;
-    if ((world = get_world(client)) == NULL)
-        goto leave;
-    district_language = world->language;
-leave:
-    thread_mutex_unlock(&client->mutex);
-    return district_language;
-}
-
-HQAPI int GetDistrictRegion(void)
-{
-    assert(client != NULL);
-    DistrictRegion district_region = DistrictRegion_America;
-    thread_mutex_lock(&client->mutex);
-    World* world;
-    if ((world = get_world(client)) == NULL)
-        goto leave;
-    district_region = world->region;
-leave:
-    thread_mutex_unlock(&client->mutex);
-    return district_region;
 }
 
 HQAPI int GetDistrictNumber(void)
@@ -347,6 +345,32 @@ HQAPI int GetDistrictNumber(void)
 leave:
     thread_mutex_unlock(&client->mutex);
     return district_number;
+}
+HQAPI DistrictLanguage GetDistrictLanguage(void)
+{
+    assert(client != NULL);
+    DistrictLanguage district_language = DistrictLanguage_Default;
+    thread_mutex_lock(&client->mutex);
+    World* world;
+    if ((world = get_world(client)) == NULL)
+        goto leave;
+    district_language = world->language;
+leave:
+    thread_mutex_unlock(&client->mutex);
+    return district_language;
+}
+HQAPI DistrictRegion GetDistrictRegion(void)
+{
+    assert(client != NULL);
+    DistrictRegion district_region = DistrictRegion_America;
+    thread_mutex_lock(&client->mutex);
+    World* world;
+    if ((world = get_world(client)) == NULL)
+        goto leave;
+    district_region = world->region;
+leave:
+    thread_mutex_unlock(&client->mutex);
+    return district_region;
 }
 
 HQAPI void Travel(uint32_t map_id, District district, uint16_t district_number)
@@ -549,8 +573,6 @@ HQAPI size_t GetPlayersOfParty(uint32_t party_id, uint32_t *buffer, size_t lengt
     if ((world = get_world(client)) == NULL)
         goto leave;
     Party *party = get_party_safe(world, party_id);
-    if (!party)
-        goto leave;
     ArrayPartyPlayer players = party->players;
     if (!buffer) {
         count = players.size;
@@ -898,10 +920,10 @@ leave:
     return bag;
 }
 
-HQAPI int GetItemModStruct(uint32_t item_id, uint32_t* buffer, size_t length)
+HQAPI size_t GetItemModStruct(uint32_t item_id, uint32_t* buffer, size_t length)
 {
     assert(client != NULL);
-    int written = -1;
+    size_t written = 0;
     if (!length && buffer)
         goto leave;
     thread_mutex_lock(&client->mutex);
@@ -912,12 +934,12 @@ HQAPI int GetItemModStruct(uint32_t item_id, uint32_t* buffer, size_t length)
     if (!item)
         goto leave;
     if (!buffer) {
-        written = (int)item->mod_struct.size;
+        written = item->mod_struct.size;
         goto leave;
     }
     if (length < item->mod_struct.size)
         goto leave;
-    for (written = 0; written < (int)item->mod_struct.size; written++) {
+    for (written = 0; written < item->mod_struct.size; ++written) {
         buffer[written] = array_at(&item->mod_struct, written);
     }
 leave:

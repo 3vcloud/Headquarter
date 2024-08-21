@@ -43,6 +43,7 @@ log_print_level_s(unsigned int level)
 
 void log_init(const char *log_file_name)
 {
+    int err;
     log_print_level = LOG_INFO;
 
     int error = thread_mutex_init(&log_mutex);
@@ -51,24 +52,20 @@ void log_init(const char *log_file_name)
         return;
     }
 
-    int length = 0;
-    char dir_path[1024];
-    if ((length = dlldir(dir_path, sizeof(dir_path))) <= 0) {
-        fprintf(stderr, "Failed to get the 'dlldir'\n");
-        return;
-    }
-
-    // @Cleanup: Ensure the directory exist.
-
+    // client specify the file path
     char file_path[1128];
-    if (*log_file_name == '/') {
-        // Absolute path
+    if (log_file_name && *log_file_name != 0) {
         snprintf(file_path, sizeof(file_path), "%s", log_file_name);
-    }
-    else {
-        // Relative to /logs folder
+    } else {
+        size_t length = 0;
+        char dir_path[1024];
+        if ((err = get_executable_dir(dir_path, sizeof(dir_path), &length)) != 0) {
+            fprintf(stderr, "Failed to get the 'dlldir'\n");
+            return;
+        }
         snprintf(file_path, sizeof(file_path), "%s/logs/%s", dir_path, log_file_name);
     }
+
     if ((log_file = fopen(file_path, "a")) == NULL) {
         fprintf(stderr, "Failed to open the file '%s'\n", file_path);
         return;

@@ -158,6 +158,7 @@ void DiffieHellmanCtx_Reset(DiffieHellmanCtx *dhm)
 
 void Network_Init(void)
 {
+    int err;
     if (Net_Initialized)
         return;
     
@@ -171,12 +172,14 @@ void Network_Init(void)
 #endif
 
     char file_path[320];
-    int length = 0;
-    bool file_read_ok = false;
-    FILE* file = 0;
+    size_t length;
     char dir_path[260];
-    length = dlldir(dir_path, sizeof(dir_path));
-    LogInfo("Looking for gw_%d.pub...", options.game_version);
+    if ((err = get_executable_dir(dir_path, sizeof(dir_path), &length)) != 0) {
+        abort();
+    }
+
+    FILE* file = NULL;
+    bool file_read_ok = false;
     for (int i = 0; i < 6 && !file_read_ok; i++) {
         snprintf(file_path, sizeof(file_path), "%s/data/gw_%d.pub.txt", dir_path, options.game_version);
         dir_path[length++] = '/';
@@ -471,7 +474,6 @@ bool AuthSrv_Connect(Connection *conn)
     if (conn->host.sa_family == 0) {
         // This could happend if we don't have an internet connection
         if (array_size(&AuthSrv_IPs) == 0) {
-            LogError("AuthSrv_Connect: No AuthSrv_IPs", conn->name);
             NetConn_Reset(conn);
             return false;
         }

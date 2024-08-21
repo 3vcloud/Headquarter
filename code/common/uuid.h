@@ -2,10 +2,6 @@
 #define COMMON_UUID_H
 
 #define UUID_DEFINED
-#ifdef uuid_t
-#undef uuid_t
-#endif
-typedef unsigned char uuid_t[16];
 
 #include <stdio.h>
 #include <string.h>
@@ -82,7 +78,7 @@ static inline int
 uuid_snprint(char *s, size_t n, const struct uuid *u)
 {
     u = u ? u : &null_uuid;
-   return snprintf(s, n, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+    return snprintf(s, n, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
         u->time_low, u->time_mid, u->time_hi_and_version,
         u->clock_seq_hi_and_reserved, u->clock_seq_low, u->node[0],
         u->node[1], u->node[2], u->node[3], u->node[4], u->node[5]);

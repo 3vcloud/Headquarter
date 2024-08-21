@@ -5,7 +5,8 @@ set(
   array.c
   array.h
   assert.h
-  dlfunc.h
+  basics.h
+  paths.h
   endian.h
   hash.h
   list.h
@@ -27,7 +28,7 @@ set(
 if (WIN32)
   list(
     APPEND COMMON_SOURCES
-    win32/dlfunc.c
+    win32/paths.c
     win32/process.c
     win32/thread.c
     win32/time.c
@@ -36,7 +37,7 @@ if (WIN32)
 else()
   list(
     APPEND COMMON_SOURCES
-    linux/dlfunc.c
+    linux/paths.c
     linux/thread.c
     linux/time.c
   )
