@@ -40,5 +40,7 @@ void api_make_player(ApiPlayer *dest, Player *src)
 
 void init_player(Player *player)
 {
+    player->agent_id = 0;
+    player->player_id = 0;
     kstr_hdr_init(&player->name, player->name_buffer, ARRAY_SIZE(player->name_buffer));
 }
