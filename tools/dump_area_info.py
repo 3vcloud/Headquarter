@@ -1,6 +1,11 @@
-from process import *
-
+import os
+import struct
 import argparse
+
+if os.name == 'nt':
+  from process import *
+  
+
 
 from scanner import FileScanner
 
