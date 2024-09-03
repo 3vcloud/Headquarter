@@ -175,7 +175,8 @@ void HandleAgentInstanceTimer(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     InstanceTimer *pack = cast(InstanceTimer *)packet;
     assert(client && client->game_srv.secured);
-    World *world = get_world_or_abort(client);
+    World *world = get_world(client);
+    if (!world) return;
 
     world->load_time = pack->time;
     world->time_server = pack->time;
@@ -221,7 +222,8 @@ void HandleAgentSpawned(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     AgentSpawned *pack = cast(AgentSpawned *)packet;
     assert(client && client->game_srv.secured);
-    World *world = get_world_or_abort(client);
+    World* world = get_world(client);
+    if (!world) return;
 
     ArrayAgent *agents = &world->agents;
     ensure_agent_exist(world, pack->agent_id);
@@ -284,7 +286,8 @@ void HandleAgentDespawned(Connection *conn, size_t psize, Packet *packet)
     AgentDespawned *pack = cast(AgentDespawned *)packet;
     assert(client && client->game_srv.secured);
 
-    World *world = get_world_or_abort(client);
+    World* world = get_world(client);
+    if (!world) return;
     Agent *agent = get_agent_safe(world, pack->agent_id);
     if (!agent) return;
     agent->spawned = false;
@@ -318,7 +321,8 @@ void HandleAgentStopMoving(Connection *conn, size_t psize, Packet *packet)
     AgentDespawned *pack = cast(AgentDespawned *)packet;
     assert(client && client->game_srv.secured);
 
-    World *world = get_world_or_abort(client);
+    World* world = get_world(client);
+    if (!world) return;
     Agent *agent = get_agent_safe(world, pack->agent_id);
     if (!agent) {
         LogError("Received 'AgentStopMoving' before agent %d spawned", pack->agent_id);
@@ -347,7 +351,8 @@ void HandleAgentSetPlayer(Connection *conn, size_t psize, Packet *packet)
     SetPlayer *pack = cast(SetPlayer *)packet;
     assert(client && client->game_srv.secured);
 
-    World *world = get_world_or_abort(client);
+    World* world = get_world(client);
+    if (!world) return;
     Agent *me = get_agent_safe(world, pack->agent_id);
     // @Cleanup:
     // When we enter a cinematic our player id is set, but no agent are spawned.
@@ -379,7 +384,8 @@ void HandleAgentUpdateDirection(Connection *conn, size_t psize, Packet *packet)
     UpdateDirection *pack = cast(UpdateDirection *)packet;
     assert(client && client->game_srv.secured);
 
-    World *world = get_world_or_abort(client);
+    World* world = get_world(client);
+    if (!world) return;
     Agent *agent = get_agent_safe(world, pack->agent_id);
     if (!agent) {
         LogError("AgentUpdateDirection received before the agent %d spawned.", pack->agent_id);

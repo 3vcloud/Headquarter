@@ -1189,6 +1189,14 @@ leave:
     return found;
 }
 
+HQAPI void AddFriend(const uint16_t* name)
+{
+    assert(client != NULL);
+    thread_mutex_lock(&client->mutex);
+    AuthSrv_AddFriend(&client->auth_srv, name);
+    thread_mutex_unlock(&client->mutex);
+}
+
 HQAPI FactionPoint GetLuxonPoints(void)
 {
     assert(client != NULL);

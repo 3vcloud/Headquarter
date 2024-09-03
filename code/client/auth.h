@@ -31,3 +31,4 @@ void AuthSrv_RequestInstance(Connection *conn, uint32_t trans_id,
 void AuthSrv_ChangeCharacter(Connection *conn, uint32_t trans_id, struct kstr *name);
 void AuthSrv_SetPlayerStatus(Connection *conn, PlayerStatus status);
 void AuthSrv_SendPacket35(Connection *conn);
+void AuthSrv_AddFriend(Connection* conn, const uint16_t* _name);
