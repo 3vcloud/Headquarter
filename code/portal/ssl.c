@@ -697,6 +697,7 @@ static int parse_tls12_handshake(
 
     if (data[0] != content_type)
     {
+        fprintf(stderr, "parse_tls12_handshake: Unexpected message: %d %.*s\n", data[0], (int)ssl->read.size, ssl->read.data);
         if (data[0] == SSL_MSG_ALERT)
             show_alert_message(*subdata, *sublen);
         return ERR_SSL_UNEXPECTED_MESSAGE;
