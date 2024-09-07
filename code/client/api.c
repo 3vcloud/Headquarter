@@ -463,7 +463,7 @@ HQAPI size_t GetCharacterName(char *buffer, size_t length)
 
     size_t written = 0;
     thread_mutex_lock(&client->mutex);
-    if (!client->current_character_idx || client->characters.size <= client->current_character_idx)
+    if (client->characters.size <= client->current_character_idx)
         goto leave;
     Character *cc = &client->characters.data[client->current_character_idx];
     if (!cc) goto leave;

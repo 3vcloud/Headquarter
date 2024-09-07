@@ -17,6 +17,8 @@ void init_client(GwClient *client)
     client->loading = true;
     client->connected = true;
 
+    client->current_character_idx = 0xffffffff;
+
     array_init(&client->characters);
 
     array_init(&client->player_hero.maps_unlocked);
