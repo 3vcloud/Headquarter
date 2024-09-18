@@ -105,8 +105,6 @@ typedef struct GwClient {
     uint32_t            world_id;
     uint32_t            player_id;
     uint32_t            static_salt;
-    DistrictRegion      region;
-    DistrictRegion      pending_region;
 
     uint32_t            next_transaction_id;
     ArrayAsyncRequest   requests;
@@ -117,6 +115,7 @@ typedef struct GwClient {
     CharacterArray      characters;
     size_t              current_character_idx;
     size_t              pending_character_idx;
+    DistrictRegion      region;
 
     Chat                chat;
     World               world;

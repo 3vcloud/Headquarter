@@ -7,8 +7,7 @@
 
 int open_dll(const char* filename, void** handle)
 {
-    *handle = dlopen(filename, RTLD_LAZY);
-    if (!*handle) {
+    if ((*handle = dlopen(filename, RTLD_LAZY)) == NULL) {
         printf("dlopen Error: %s\n", dlerror());
         return 1;
     }
@@ -19,8 +18,7 @@ int close_dll(void* handle) {
     return dlclose(handle);
 }
 int get_dll_symbol(void* handle, const char* symbol, void** out) {
-    *out = dlsym(handle, symbol);
-    if (!*out) {
+    if ((*out = dlsym(handle, symbol)) == NULL) {
         printf("dlsym Error: %s\n", dlerror());
         return 1;
     }
@@ -29,12 +27,11 @@ int get_dll_symbol(void* handle, const char* symbol, void** out) {
 
 int get_executable_path(char* buffer, size_t capacity, size_t* length)
 {
-    int ret = readlink("/proc/self/exe", buffer, capacity);
-    if (ret == -1)
-        return ret;
-    int bytes = MIN(ret, capacity - 1);
-    if (bytes >= 0)
-        buffer[bytes] = '\0';
+    int err;
+    if ((err = readlink("/proc/self/exe", buffer, capacity)) < 0)
+        return errno;
+    size_t bytes = min_size_t((size_t)ret, capacity - 1);
+    buffer[bytes] = '\0';
     *length = bytes;
     return 0;
 }

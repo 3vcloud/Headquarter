@@ -75,20 +75,17 @@ void HandleGameServerInfo(Connection *conn, size_t psize, Packet *packet)
         uint32_t player_id;
     } GameServerInfo;
 #pragma pack(pop)
-    
+
     assert(packet->header == AUTH_SMSG_GAME_SERVER_INFO);
     assert(sizeof(GameServerInfo) == psize);
-
-    
 
     GwClient *client = cast(GwClient *)conn->data;
     GameServerInfo *pack = cast(GameServerInfo *)packet;
     assert(client);
 
     assert(client->state == AwaitGameServerInfo);
-    client->region = client->pending_region;
 
-    LogDebug("HandleGameServerInfo { map_id %d, region = %d }", pack->map_id, client->region);
+    LogDebug("HandleGameServerInfo { world_id %d, map_id %d, player_id %d }", pack->world_id, pack->map_id, pack->player_id);
 
     struct sockaddr host;
     memcpy(&host, pack->host, sizeof(host));
@@ -116,9 +113,6 @@ void HandleGameTransferInfo(Connection *conn, size_t psize, Packet *packet)
     ServerInfo *pack = cast(ServerInfo *)packet;
     assert(client && client->game_srv.secured);
     World *world = get_world_or_abort(client);
-
-    LogDebug("HandleGameTransferInfo { region %d, map_id %d }", pack->region, pack->map_id);
-
 
     client->region = pack->region;
     struct sockaddr host;
@@ -202,6 +196,7 @@ void extract_district(
     GwClient *client,
     District district, DistrictRegion *region, DistrictLanguage *language)
 {
+    World *world;
     switch (district) {
     case DISTRICT_INTERNATIONAL:
         *region = DistrictRegion_International;
@@ -252,17 +247,14 @@ void extract_district(
         *language = DistrictLanguage_Default;
         break;
     case DISTRICT_CURRENT:
-    default: {
-        World *world;
+    default:
+        *region = client->region;
         if ((world = get_world(client)) != NULL) {
-            *region = client->region;
             *language = world->language;
         } else {
-            *region = 0;
             *language = 0;
         }
         break;
-    }
     }
 }
 
