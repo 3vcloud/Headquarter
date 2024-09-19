@@ -9,7 +9,7 @@ char** g_Argv;
 
 void print_help(bool terminate)
 {
-    printf("Usage: [options] <script>\n"
+    printf("Usage: [options] <script> [--] [more_options]\n"
 
         "    --version                  print version and exist\n"
         "    -c <config_file>           use config_file as configuration file\n"
