@@ -38,7 +38,7 @@ void print_help(bool terminate)
     if (terminate) exit(0);
 }
 
-void check_for_more_arguments(int argc, const char** argv, int i, int nargs)
+void check_for_more_arguments(int argc, char** argv, int i, int nargs)
 {
     if (argc <= i + nargs) {
         printf("Not enough arguments after '%s'\n", argv[i]);
