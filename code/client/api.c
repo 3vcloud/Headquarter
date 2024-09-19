@@ -393,7 +393,7 @@ leave:
     thread_mutex_unlock(&client->mutex);
 }
 
-HQAPI void RedirectMap(uint32_t map_id)
+HQAPI void RedirectMap(uint32_t map_id, District district, uint32_t district_number)
 {
     assert(client != NULL);
     thread_mutex_lock(&client->mutex);
@@ -401,9 +401,13 @@ HQAPI void RedirectMap(uint32_t map_id)
         goto leave;
     uint32_t map_type = find_map_type_from_map_id(map_id);
 
+    DistrictRegion region;
+    DistrictLanguage language;
+    extract_district(client, district, &region, &language);
+
     uint32_t trans_id = issue_next_transaction(client, AsyncType_None);
     AuthSrv_RequestInstance(&client->auth_srv, trans_id, map_id,
-        map_type, 0, 0, 0);
+        map_type, region, district_number, language);
 leave:
     thread_mutex_unlock(&client->mutex);
 }
