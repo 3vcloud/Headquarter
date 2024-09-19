@@ -21,8 +21,8 @@ void HandleTradeRequest(Connection *conn, size_t psize, Packet *packet)
 
     // Player *player = GetPlayer(pack->player);
     // LogInfo("%S request a trade.", player->name);
-
-    GameSrv_TradeAcknowledge(client, pack->player_id);
+    if(pack->player_id)
+        GameSrv_TradeAcknowledge(client, pack->player_id);
 }
 
 void HandleTradeTerminate(Connection *conn, size_t psize, Packet *packet)
