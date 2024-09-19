@@ -29,7 +29,7 @@ int get_executable_path(char* buffer, size_t capacity, size_t* length)
 {
     int err;
     if ((err = readlink("/proc/self/exe", buffer, capacity)) < 0)
-        return errno;
+        return err;
     size_t bytes = min_size_t((size_t)err, capacity - 1);
     buffer[bytes] = '\0';
     *length = bytes;
