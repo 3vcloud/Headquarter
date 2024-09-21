@@ -407,7 +407,7 @@ HQAPI void RedirectMap(uint32_t map_id, District district, uint32_t district_num
 
     uint32_t trans_id = issue_next_transaction(client, AsyncType_None);
     AuthSrv_RequestInstance(&client->auth_srv, trans_id, map_id,
-        map_type, region, district_number, language);
+        map_type, 0, 0, 0);
 leave:
     thread_mutex_unlock(&client->mutex);
 }
