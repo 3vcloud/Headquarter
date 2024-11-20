@@ -518,7 +518,7 @@ void HandleAgentMoveToPoint(Connection *conn, size_t psize, Packet *packet)
         AgentId agent_id;
         Vec2f dest;
         int16_t plane;
-        int16_t unk0;
+        int16_t current_plane;
     } Destination;
 #pragma pack(pop)
 
@@ -614,7 +614,7 @@ void HandleAgentDestroyPlayer(Connection* conn, size_t psize, Packet* packet)
     }
 }
 
-void HandleAgentCreatePlayer(Connection *conn, size_t psize, Packet *packet)
+void HandleUpdatePlayerInfo(Connection *conn, size_t psize, Packet *packet)
 {
 #pragma pack(push, 1)
     typedef struct {
@@ -629,7 +629,7 @@ void HandleAgentCreatePlayer(Connection *conn, size_t psize, Packet *packet)
     } PlayerInfo;
 #pragma pack(pop)
 
-    assert(packet->header == GAME_SMSG_AGENT_CREATE_PLAYER);
+    assert(packet->header == GAME_SMSG_UPDATE_PLAYER_INFO);
     assert(sizeof(PlayerInfo) == psize);
 
     GwClient *client = cast(GwClient *)conn->data;
