@@ -713,7 +713,11 @@ void HandleAgentAttrUpdateInt(Connection *conn, size_t psize, Packet *packet)
     GwClient *client = cast(GwClient *)conn->data;
     AttrValue *pack = cast(AttrValue *)packet;
     assert(client && client->game_srv.secured);
-    World *world = get_world_or_abort(client);
+    World* world = get_world(client);
+    if (!world) {
+        LogError("Failed to get_world in HandleAgentAttrUpdateInt");
+        return;
+    }
 
     int attr_id = pack->attr_id;
     if (attr_id < 0 || 66 < attr_id) {

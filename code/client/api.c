@@ -1031,10 +1031,10 @@ HQAPI bool RequestItemQuote(uint32_t item_id)
     TransactionType type = TransactionType_TraderSell;
     QuoteInfo give;
     give.item_count = 0;
-    give.unk1 = 0;
+    give.gold = 0;
     QuoteInfo recv;
     recv.item_count = 0;
-    recv.unk1 = 0;
+    recv.gold = 0;
     if (!item->bag) {
         // Buy quote
         type = TransactionType_TraderBuy;
@@ -1047,7 +1047,7 @@ HQAPI bool RequestItemQuote(uint32_t item_id)
         give.item_count = 1;
         give.item_ids[0] = item_id;
     }
-    GameSrv_RequestQuote(client, type, &give, &recv);
+    GameSrv_RequestQuote(client, type, &give, &recv, false);
     success = true;
 leave:
     thread_mutex_unlock(&client->mutex);

@@ -255,6 +255,7 @@
 #define GAME_SMSG_WINDOW_OWNER                          (0x00C3) // 195
 #define GAME_SMSG_TRANSACTION_REJECT                    (0x00C5) // 197
 #define GAME_SMSG_TRANSACTION_DONE                      (0x00CB) // 203
+#define GAME_SMSG_WINDOW_TRADER							(0x00CC) // 204
 #define GAME_SMSG_SKILLBAR_UPDATE_SKILL                 (0x00D8) // 216
 #define GAME_SMSG_SKILLBAR_UPDATE                       (0x00D9) // 217
 #define GAME_SMSG_SKILLS_UNLOCKED                       (0x00DA) // 218

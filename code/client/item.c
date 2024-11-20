@@ -324,6 +324,134 @@ void HandleInventoryCreateBag(Connection *conn, size_t psize, Packet *packet)
     world->inventory.bags[pack->bag_model_id] = bag;
 }
 
+void HandleRequestSellableItems(GwClient* client, TransactionType type, uint32_t item_type, uint32_t item_amount) {
+
+    World* world = get_world_or_abort(client);
+
+    // Buy items received; ask for sellable items
+
+    if (type != TransactionType_TraderSell)
+        return;
+
+    QuoteInfo give;
+    memset(&give, 0, sizeof(give));
+    QuoteInfo recv;
+    memset(&recv, 0, sizeof(recv));
+
+    Bag* bag_ptr;
+    Bag* bags[] = {
+        world->inventory.backpack,
+        world->inventory.bag1,
+        world->inventory.bag2,
+        world->inventory.beltpouch
+    };
+
+    for (size_t i = 0; i < sizeof(bags) / sizeof(*bags); i++) {
+        bag_ptr = bags[i];
+        if (!bag_ptr && bag_ptr->item_count)
+            continue;
+        Item** item;
+        array_foreach(item, &bag_ptr->items) {
+            if (!*item) continue;
+            if ((*item)->quantity < item_amount)
+                continue;
+            if (item_type == 10) {
+                // Dyes
+                if ((*item)->type != 10)
+                    continue;
+            }
+            else if (item_type == 11) {
+                // Common materials
+                if ((*item)->type != 11)
+                    continue;
+                bool is_common_material = false;
+                uint32_t* mod_struct;
+                array_foreach(mod_struct, &(*item)->mod_struct) {
+                    uint16_t mod_id = ((*mod_struct) & 0xffff0000) >> 16;
+                    if (mod_id == 0x2508) {
+                        uint8_t mat_slot = (((*mod_struct) & 0x0000ff00) >> 8);
+                        is_common_material = mat_slot < 12;
+                        break;
+                    }
+                }
+                if (!is_common_material)
+                    continue;
+            }
+            else if (item_type == 258) {
+                // Rare materials
+                if ((*item)->type != 11)
+                    continue;
+                bool is_rare_material = false;
+                uint32_t* mod_struct;
+                array_foreach(mod_struct, &(*item)->mod_struct) {
+                    uint16_t mod_id = ((*mod_struct) & 0xffff0000) >> 16;
+                    if (mod_id == 0x2508) {
+                        uint8_t mat_slot = (((*mod_struct) & 0x0000ff00) >> 8);
+                        is_rare_material = mat_slot > 11 && mat_slot < 38;
+                        break;
+                    }
+                }
+                if (!is_rare_material)
+                    continue;
+            }
+            else if (item_type == 257) {
+                // Runes/Insignias
+                if ((*item)->type != 8)
+                    continue;
+                bool attaches_to_armor = false;
+                uint32_t* mod_struct;
+                array_foreach(mod_struct, &(*item)->mod_struct) {
+                    if (*mod_struct == 0x25b80000) {
+                        attaches_to_armor = true;
+                        break;
+                    }
+                }
+                if (!attaches_to_armor)
+                    continue;
+            }
+            else {
+                continue; // Other types not supported
+            }
+            if (give.item_count == sizeof(give.item_ids) / sizeof(*give.item_ids)) {
+                world->tmp_merchant_pending_sell_preview++;
+                GameSrv_RequestQuote(client, type, &give, &recv, true);
+                memset(&give, 0, sizeof(give));
+            }
+            give.item_ids[give.item_count] = (*item)->item_id;
+            give.item_count++;
+        }
+    }
+    if (give.item_count) {
+        world->tmp_merchant_pending_sell_preview++;
+        GameSrv_RequestQuote(client, type, &give, &recv, true);
+    }
+}
+
+void HandleMerchantReady(GwClient* client)
+{
+    World* world = get_world_or_abort(client);
+
+    world->tmp_merchant_pending_sell_preview = 0;
+
+    Item* item;
+    LogInfo("HandleMerchantReady called for %d items", world->tmp_merchant_items.size);
+    thread_mutex_lock(&client->mutex);
+    for (size_t i = 0; i < world->tmp_merchant_items.size; i++) {
+        array_add(&world->merchant_items, world->tmp_merchant_items.data[i]);
+        if (array_inside(&world->tmp_merchant_prices, i)) {
+            item = world->tmp_merchant_items.data[i];
+            // GW Bug: last sale price can be LOWER than the default item value!
+            if (item->value < world->tmp_merchant_prices.data[i])
+                item->value = world->tmp_merchant_prices.data[i];
+        }
+    }
+    thread_mutex_unlock(&client->mutex);
+    Event event;
+    Event_Init(&event, EventType_DialogOpen);
+    event.DialogOpen.sender_agent_id = world->merchant_agent_id;
+    broadcast_event(&client->event_mgr, &event);
+}
+
 void HandleWindowItemStreamEnd(Connection* conn, size_t psize, Packet* packet) {
     #pragma pack(push, 1)
         typedef struct {
@@ -338,15 +466,26 @@ void HandleWindowItemStreamEnd(Connection* conn, size_t psize, Packet* packet) {
     GwClient* client = cast(GwClient*)conn->data;
     assert(client && client->game_srv.secured);
 
-    HandleMerchantReady(client);
+    ItemStreamEnd* pack = cast(ItemStreamEnd*)packet;
+
+    LogInfo("HandleWindowItemStreamEnd, %d\n", pack->type);
+
+    World* world = get_world_or_abort(client);
+
+    if (pack->type == TransactionType_TraderSell) {
+        // Sellable items received
+        world->tmp_merchant_pending_sell_preview--;
+    }
+    if (world->tmp_merchant_pending_sell_preview == 0)
+        HandleMerchantReady(client);
 }
 
 void HandleWindowMerchant(Connection* conn, size_t psize, Packet* packet) {
     #pragma pack(push, 1)
         typedef struct {
             Header header;
-            uint8_t type;
-            uint32_t unk;
+            uint8_t type; // TransactionType
+            uint32_t item_type;
         } WindowMerchant;
     #pragma pack(pop)
 
@@ -357,7 +496,35 @@ void HandleWindowMerchant(Connection* conn, size_t psize, Packet* packet) {
     WindowMerchant* pack = cast(WindowMerchant*)packet;
     assert(client&& client->game_srv.secured);
 
-    if (pack->type == 11 && !pack->unk) {
+    World* world = get_world_or_abort(client);
+
+    if (pack->type == TransactionType_MerchantSell && !pack->item_type) {
+        // Special case for merchant; only receives list of buyable items (i.e. no WindowPricesEnd packet; GW client figures out the sell tab)
+        HandleMerchantReady(client);
+    }
+}
+
+void HandleWindowTrader(Connection* conn, size_t psize, Packet* packet) {
+#pragma pack(push, 1)
+    typedef struct {
+        Header header;
+        uint8_t type; // TransactionType
+        uint32_t item_type;
+        uint8_t item_amount;
+        uint8_t h000d;
+    } WindowTrader;
+#pragma pack(pop)
+
+    assert(packet->header == GAME_SMSG_WINDOW_TRADER);
+    assert(sizeof(WindowTrader) == psize);
+
+    GwClient* client = cast(GwClient*)conn->data;
+    WindowTrader* pack = cast(WindowTrader*)packet;
+    assert(client && client->game_srv.secured);
+
+    HandleRequestSellableItems(client, cast(TransactionType)pack->type, pack->item_type, pack->item_amount);
+
+    if (pack->type == TransactionType_MerchantSell && !pack->item_type) {
         // Special case for merchant; only receives list of buyable items (i.e. no WindowPricesEnd packet; GW client figures out the sell tab)
         HandleMerchantReady(client);
     }
@@ -388,29 +555,6 @@ void HandleWindowOwner(Connection *conn, size_t psize, Packet *packet)
     Event event;
     Event_Init(&event, EventType_DialogOpen);
     event.DialogOpen.sender_agent_id = pack->agent_id;
-    broadcast_event(&client->event_mgr, &event);
-}
-
-void HandleMerchantReady(GwClient* client)
-{
-    World *world = get_world_or_abort(client);
-
-    Item* item;
-    LogInfo("HandleMerchantReady called for %d items", world->tmp_merchant_items.size);
-    thread_mutex_lock(&client->mutex);
-    for (size_t i = 0; i < world->tmp_merchant_items.size; i++) {
-        array_add(&world->merchant_items, world->tmp_merchant_items.data[i]);
-        if (array_inside(&world->tmp_merchant_prices, i)) {
-            item = world->tmp_merchant_items.data[i];
-            // GW Bug: last sale price can be LOWER than the default item value!
-            if (item->value < world->tmp_merchant_prices.data[i])
-                item->value = world->tmp_merchant_prices.data[i];
-        }
-    }
-    thread_mutex_unlock(&client->mutex);
-    Event event;
-    Event_Init(&event, EventType_DialogOpen);
-    event.DialogOpen.sender_agent_id = world->merchant_agent_id;
     broadcast_event(&client->event_mgr, &event);
 }
 

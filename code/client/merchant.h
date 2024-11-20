@@ -22,7 +22,7 @@ typedef struct TransactionInfo {
 } TransactionInfo;
 
 typedef struct QuoteInfo {
-    uint32_t unk1;
+    uint32_t gold;
     size_t   item_count;
     uint32_t item_ids[16];
 } QuoteInfo;

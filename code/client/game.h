@@ -46,7 +46,7 @@ void GameSrv_BuyMaterials(GwClient *client, TransactionType type,
     int gold_send, TransactionInfo *send_info,
     int gold_recv, TransactionInfo *recv_info);
 void GameSrv_RequestQuote(GwClient *client, TransactionType type,
-    QuoteInfo *send_info, QuoteInfo *recv_info);
+    QuoteInfo* send_info, QuoteInfo* recv_info, bool preview);
 void GameSrv_FlagHero(GwClient *client, Vec2f pos, AgentId hero_agent_id);
 void GameSrv_FlagAllHero(GwClient *client, Vec2f pos);
 void GameSrv_AcceptInvite(GwClient *client, int party_id);
@@ -105,7 +105,7 @@ void HandleItemRemove(Connection *conn, size_t psize, Packet *packet);
 void HandleItemStreamCreate(Connection *conn, size_t psize, Packet *packet);
 void HandleItemStreamDestroy(Connection *conn, size_t psize, Packet *packet);
 void HandleItemPriceQuote(Connection *conn, size_t psize, Packet *packet);
-void HandleMerchantReady();
+void HandleWindowTrader(Connection* conn, size_t psize, Packet* packet);
 void HandleWindowOwner(Connection* conn, size_t psize, Packet* packet);
 void HandleWindowMerchant(Connection* conn, size_t psize, Packet* packet);
 void HandleWindowItemStreamEnd(Connection *conn, size_t psize, Packet *packet);

@@ -21,6 +21,7 @@ void init_world(World *world, uint32_t hash)
 
     world->player_count = 0;
     world->hash = hash;
+    world->tmp_merchant_pending_sell_preview = 0;
 }
 
 void free_world(World *world)
@@ -58,6 +59,8 @@ void free_world(World *world)
     array_reset(&world->merchant_items);
     free_dialog_info(&world->dialog);
     free_trade_session(&world->trade_session);
+
+    world->tmp_merchant_pending_sell_preview = 0;
 }
 
 void reset_world(World *world)

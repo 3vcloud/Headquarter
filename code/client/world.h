@@ -29,6 +29,7 @@ typedef struct World {
     GuildMemberUpdate   guild_member_update;
     ArrayItem           tmp_merchant_items;
     array_uint32_t      tmp_merchant_prices;
+    uint32_t            tmp_merchant_pending_sell_preview;
     ArrayItem           merchant_items;
     AgentId             merchant_agent_id;
     AgentId             interact_with;
