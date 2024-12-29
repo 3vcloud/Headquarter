@@ -47,7 +47,8 @@ void TransferGameServer(GwClient *client)
     Character *cc = GetCharacter(client, client->current_character_idx);
     GameServerTransfer *transfer = &client->server_transfer;
 
-    assert(client->world.hash == 0);
+    //assert(client->world.hash == 0);
+    reset_world(&client->world);
     init_world(&client->world, transfer->world_id);
 
     client->game_srv.host = transfer->host;
