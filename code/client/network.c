@@ -743,6 +743,7 @@ void NetConn_Recv(Connection *conn)
     assert(conn && conn->secured);
 
     uint8_t buffer[5840];
+    thread_mutex_lock(&conn->mutex);
     size_t size = conn->in.capacity - conn->in.size;
     int iresult = recv(conn->fd.handle, cast(char *)buffer, (int)size, 0);
 
@@ -762,6 +763,7 @@ void NetConn_Recv(Connection *conn)
     conn->in.size += cast(size_t)iresult;
 
     NetConn_DispatchPackets(conn);
+    thread_mutex_unlock(&conn->mutex);
 }
 
 void NetConn_DispatchPackets(Connection *conn)
