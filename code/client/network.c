@@ -664,6 +664,33 @@ size_t NetMsg_Unpack(const uint8_t *data, size_t data_size,
     return (size_t)retval;
 }
 
+static size_t compute_nested_written_size(MsgField *fields, int fields_count)
+{
+    #pragma pack(push, 1)
+    struct array { uint32_t size; };
+    #pragma pack(pop)
+
+    size_t total = 0;
+    for (int i = 0; i < fields_count; i++) {
+        MsgField field = fields[i];
+        if (field.type == TYPE_NESTED_STRUCT) {
+            break;
+        }
+
+        size_t prefix_size = get_prefix_size(field.type);
+        if (prefix_size) {
+            if (field.type == TYPE_STRING_16) {
+                total += (size_t)field.param * sizeof(uint16_t);
+            } else {
+                total += sizeof(struct array);
+            }
+        } else {
+            total += get_element_size(&field);
+        }
+    }
+    return total;
+}
+
 void SendPacket(Connection *conn, size_t size, void *p)
 {
     thread_mutex_lock(&conn->mutex);
@@ -1103,6 +1130,7 @@ int unpack(const uint8_t *data, size_t data_size, uint8_t *buffer,
             assert(i + 1 < fields_count);
             MsgField *next_fields = fields + i + 1;
             int next_fields_count = (int)(fields_count - i - 1);
+            size_t nested_written_size = compute_nested_written_size(next_fields, next_fields_count);
 
             for (size_t j = 0; j < packed_elem_count; j++) {
                 const uint8_t *d = data + readed;
@@ -1114,7 +1142,7 @@ int unpack(const uint8_t *data, size_t data_size, uint8_t *buffer,
                 int tmp = unpack(d, d_size, b, b_size, next_fields, next_fields_count);
                 if (tmp < 0) return -1;
                 readed += tmp;
-                written += tmp;// field.size;
+                written += (int)nested_written_size;
             }
 
             return readed;
