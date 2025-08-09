@@ -1,7 +1,7 @@
 #ifndef HEADQUARTER_H
 #define HEADQUARTER_H
 
-#define GUILD_WARS_VERSION          (37514)
+#define GUILD_WARS_VERSION          (37628)
 #define HEADQUARTER_VERSION_MAJOR   (1)
 #define HEADQUARTER_VERSION_MINOR   (0)
 
@@ -18,6 +18,8 @@
 # ifndef _WIN32
 #  define __cdecl __attribute__((__cdecl__))
 # endif
+
+#include <client/network.h>
 
 #include <stdint.h>
 
@@ -229,4 +231,7 @@ HQAPI void              TradeAccept(void);
 HQAPI void              TradeCancel(void);
 HQAPI int               GetArgc();
 HQAPI char**            GetArgv();
+
+HQAPI void              RequestMatch(void);
+
 #endif // HEADQUARTER_H

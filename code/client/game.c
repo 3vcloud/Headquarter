@@ -529,6 +529,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_INSTANCE_LOAD_PLAYER_NAME]       = HandleInstanceLoadPlayerName;
     handlers[GAME_SMSG_INSTANCE_LOAD_SPAWN_POINT]       = HandleInstanceLoadSpawnPoint;
     handlers[GAME_SMSG_INSTANCE_LOAD_INFO]              = HandleInstanceLoadInfo;
+    handlers[GAME_SMSG_OBSERVER_MATCH_RECEIVE]          = HandleObserverMatchReceive;
     handlers[GAME_SMSG_TRANSFER_GAME_SERVER_INFO]       = HandleGameTransferInfo;
     handlers[GAME_SMSG_READY_FOR_MAP_SPAWN]             = HandleReadyForMapSpawn;
     handlers[GAME_SMSG_INSTANCE_CANT_ENTER]             = HandleCantEnterOutpost;
@@ -768,4 +769,37 @@ void GameSrv_PingRequest(Connection *conn)
 void GameSrv_HeartBeat(Connection *conn)
 {
     GameSrv_PingRequest(conn);
+}
+
+void HandleObserverMatchReceive(Connection *conn, size_t psize, Packet *packet)
+{
+    assert(packet->header == GAME_SMSG_OBSERVER_MATCH_RECEIVE);
+    
+    GwClient *client = cast(GwClient *)conn->data;
+    assert(client && client->game_srv.secured);
+
+    Event event;
+    Event_Init(&event, EventType_ObserverMatchReceive);
+    event.ObserverMatchReceive.packet = (const struct PacketObserverMatchReceive*)packet;
+    event.ObserverMatchReceive.packet_size = psize;
+    broadcast_event(&client->event_mgr, &event);
+}
+
+void GameSrv_RequestMatch(GwClient *client)
+{
+    assert(client && client->game_srv.secured);
+    
+    Packet packet = {142};
+    SendPacket(&client->game_srv, sizeof(packet), &packet);
+}
+
+void RequestMatch(void)
+{
+    Connection *conn = &client->game_srv;
+    if (conn && conn->data) {
+        GwClient *client = cast(GwClient *)conn->data;
+        if (client->game_srv.secured) {
+            GameSrv_RequestMatch(client);
+        }
+    }
 }

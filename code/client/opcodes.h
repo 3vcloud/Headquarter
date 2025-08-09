@@ -351,6 +351,7 @@
 #define GAME_SMSG_INSTANCE_MANIFEST_DONE                (0x0196) // 406
 #define GAME_SMSG_INSTANCE_MANIFEST_PHASE               (0x0197) // 407
 #define GAME_SMSG_INSTANCE_LOAD_INFO                    (0x0198) // 408
+#define GAME_SMSG_OBSERVER_MATCH_RECEIVE                 (0x019C) // 412
 #define GAME_SMSG_CREATE_MISSION_PROGRESS               (0x019F) // 415
 #define GAME_SMSG_UPDATE_MISSION_PROGRESS               (0x01A1) // 417
 #define GAME_SMSG_TRANSFER_GAME_SERVER_INFO             (0x01A4) // 420

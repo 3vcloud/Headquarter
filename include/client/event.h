@@ -27,6 +27,7 @@ typedef enum EventType {
     EventType_WorldMapLeave,
     EventType_PlayerPartySize,
     EventType_AgentDespawned,
+    EventType_ObserverMatchReceive,
 
     EventType_Count
 } EventType;
@@ -111,6 +112,34 @@ typedef struct Event {
         struct {
             AgentId agent_id;
         } AgentDespawned;
+        struct {
+            #pragma pack(push, 1)
+            struct PacketObserverMatchReceive {
+                uint16_t header;
+                uint32_t match_id;
+                uint16_t map_id;
+                uint16_t mins_ago;
+                uint8_t  unknown_byte0;
+                uint8_t  unknown_byte1;
+                uint8_t  unknown_byte2;
+                uint32_t nested_count;
+                struct {
+                    uint8_t  b0;
+                    uint8_t  b1;
+                    uint8_t  b2;
+                    uint8_t  b3;
+                    uint8_t  b4;
+                    uint8_t  b5;
+                    uint8_t  b6;
+                    uint16_t unknown_word0;
+                    uint8_t  unknown_byte7;
+                    uint16_t string[48];
+                } entries[2];
+            };
+            #pragma pack(pop)
+            const struct PacketObserverMatchReceive* packet;
+            size_t packet_size;
+        } ObserverMatchReceive;
     };
 } Event;
 

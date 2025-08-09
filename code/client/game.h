@@ -80,6 +80,7 @@ void GameSrv_TradeRemoveItem(GwClient *client, int32_t item_id, int quantity);
 void GameSrv_TradeCancelOffer(GwClient *client);
 void GameSrv_TradeAccept(GwClient *client);
 void GameSrv_TradeInitiate(GwClient *client, AgentId partner);
+void GameSrv_RequestMatch(GwClient *client);
 
 
 void HandleInstanceShowWin(Connection *conn, size_t psize, Packet *packet);
@@ -229,3 +230,4 @@ void HandlePartySearchSeek(Connection *conn, size_t psize, Packet *packet);
 void HandlePartySearchRemove(Connection *conn, size_t psize, Packet *packet);
 void HandlePartySearchSize(Connection *conn, size_t psize, Packet *packet);
 void HandlePartySearchType(Connection *conn, size_t psize, Packet *packet);
+void HandleObserverMatchReceive(Connection *conn, size_t psize, Packet *packet);
