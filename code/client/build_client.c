@@ -70,7 +70,6 @@
 #pragma warning(disable: 4214) // nonstandard extension used: bit field types other than int
 #endif
 
-#include "arc4.h"
 #include "command.h"
 #include "error.h"
 #include "kstr.h"

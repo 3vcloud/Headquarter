@@ -1,7 +1,19 @@
-#ifdef CORE_NETWORK_H
-#error "network.h included more than once"
-#endif
+#ifndef CORE_NETWORK_H
 #define CORE_NETWORK_H
+
+#include <stdint.h>
+#ifdef _WIN32
+# include <winsock2.h>
+#else
+# include <sys/socket.h>
+#endif
+#include <common/array.h>
+#include <common/socket.h>
+#include <common/thread.h>
+#include "arc4.h"
+#include "packets.h"
+
+typedef uint64_t msec_t;
 
 #if _BYTE_ORDER != _LITTLE_ENDIAN
 # error "We currently don't support big endian machine"
@@ -157,3 +169,5 @@ size_t NetMsg_Unpack(const uint8_t *data, size_t data_size,
     Packet *packet, size_t pack_size, MsgFormat *format);
 
 void Sha1(const void *data, size_t size, char digest[20]);
+
+#endif /* CORE_NETWORK_H */

@@ -1,7 +1,7 @@
-#ifdef CORE_PACKETS_H
-#error "packets.h included more than once"
-#endif
+#ifndef CORE_PACKETS_H
 #define CORE_PACKETS_H
+
+#include "opcodes.h"
 
 typedef enum Type {
     TYPE_MSG_HEADER     = 1,
@@ -38,3 +38,5 @@ extern MsgFormat AUTH_CLIENT_FORMATS[AUTH_CMSG_COUNT];
 extern MsgFormat AUTH_SERVER_FORMATS[AUTH_SMSG_COUNT];
 extern MsgFormat GAME_CLIENT_FORMATS[GAME_CMSG_COUNT];
 extern MsgFormat GAME_SERVER_FORMATS[GAME_SMSG_COUNT];
+
+#endif /* CORE_PACKETS_H */
