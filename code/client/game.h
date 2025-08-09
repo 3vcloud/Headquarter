@@ -81,6 +81,7 @@ void GameSrv_TradeCancelOffer(GwClient *client);
 void GameSrv_TradeAccept(GwClient *client);
 void GameSrv_TradeInitiate(GwClient *client, AgentId partner);
 void GameSrv_RequestMatch(GwClient *client);
+void GameSrv_JoinObserverMatch(GwClient *client, uint32_t match_id);
 
 
 void HandleInstanceShowWin(Connection *conn, size_t psize, Packet *packet);

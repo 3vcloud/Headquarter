@@ -233,5 +233,6 @@ HQAPI int               GetArgc();
 HQAPI char**            GetArgv();
 
 HQAPI void              RequestMatch(void);
+HQAPI void              JoinObserverMatch(uint32_t match_id);
 
 #endif // HEADQUARTER_H

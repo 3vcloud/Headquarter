@@ -793,6 +793,23 @@ void GameSrv_RequestMatch(GwClient *client)
     SendPacket(&client->game_srv, sizeof(packet), &packet);
 }
 
+void GameSrv_JoinObserverMatch(GwClient *client, uint32_t match_id)
+{
+    assert(client && client->game_srv.secured);
+    
+    #pragma pack(push, 1)
+    typedef struct {
+        Header header;
+        uint32_t match_id;
+    } JoinObserverMatch;
+    #pragma pack(pop)
+
+    JoinObserverMatch packet;
+    packet.header = 141;
+    packet.match_id = match_id;
+    SendPacket(&client->game_srv, sizeof(packet), &packet);
+}
+
 void RequestMatch(void)
 {
     Connection *conn = &client->game_srv;
@@ -800,6 +817,17 @@ void RequestMatch(void)
         GwClient *client = cast(GwClient *)conn->data;
         if (client->game_srv.secured) {
             GameSrv_RequestMatch(client);
+        }
+    }
+}
+
+void JoinObserverMatch(uint32_t match_id)
+{
+    Connection *conn = &client->game_srv;
+    if (conn && conn->data) {
+        GwClient *client = cast(GwClient *)conn->data;
+        if (client->game_srv.secured) {
+            GameSrv_JoinObserverMatch(client, match_id);
         }
     }
 }
