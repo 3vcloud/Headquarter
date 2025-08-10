@@ -2,6 +2,7 @@
 #define EVENT_H
 
 #include <common/list.h>
+#include <stdbool.h>
 
 typedef enum EventType {
     EventType_AgentFocus,
@@ -25,6 +26,7 @@ typedef enum EventType {
     EventType_WorldCantTravel,
     EventType_WorldMapEnter,
     EventType_WorldMapLeave,
+    EventType_InstanceLoadInfo,
     EventType_PlayerPartySize,
     EventType_AgentDespawned,
     EventType_ObserverMatchReceive,
@@ -106,6 +108,14 @@ typedef struct Event {
             int8_t value;
         } WorldCantTravel;
         struct {
+            AgentId     agent;
+            int16_t     map_id;
+            int8_t      is_explorable;
+            int32_t     district;
+            int8_t      language;
+            int8_t      is_observer;
+        } InstanceLoadInfo;
+        struct {
             uint16_t player_id;
             uint8_t size;
         } PlayerPartySize;
@@ -143,7 +153,7 @@ typedef struct Event {
     };
 } Event;
 
-void Event_Init(Event *event, EventType type)
+static inline void Event_Init(Event *event, EventType type)
 {
     memset(event, 0, sizeof(*event));
     event->type = type;

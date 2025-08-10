@@ -202,6 +202,9 @@ HQAPI msec_t GetWorldTime(void)
     if ((world = get_world(client)) == NULL)
         goto leave;
     world_time = world->world_time;
+    if (world_time == 0) {
+        world_time = world->time_server;
+    }
 leave:
     thread_mutex_unlock(&client->mutex);
     return world_time;
@@ -324,6 +327,20 @@ HQAPI DistrictLanguage GetDistrictLanguage(void)
 leave:
     thread_mutex_unlock(&client->mutex);
     return district_language;
+}
+
+HQAPI bool GetIsObserver(void)
+{
+    assert(client != NULL);
+    bool is_observer = false;
+    thread_mutex_lock(&client->mutex);
+    World* world;
+    if ((world = get_world(client)) == NULL)
+        goto leave;
+    is_observer = world->is_observer;
+leave:
+    thread_mutex_unlock(&client->mutex);
+    return is_observer;
 }
 
 HQAPI DistrictRegion GetDistrictRegion(void)

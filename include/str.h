@@ -31,6 +31,7 @@
 #define STR_H_INC
 
 #include <ctype.h>
+#include <ctype.h>
 #include <wchar.h>
 #include <stdio.h>
 #include <string.h>
@@ -170,6 +171,22 @@ wcstostr(char *dest, const wchar_t *src, size_t n)
     return i;
 }
 
+#ifdef _WIN32
+#include <string.h>
+#ifndef stricmp
+#define stricmp _stricmp
+#endif
+#ifndef wcsicmp
+#define wcsicmp _wcsicmp
+#endif
+#ifndef strnicmp
+#define strnicmp _strnicmp
+#endif
+#ifndef wcsnicmp
+#define wcsnicmp _wcsnicmp
+#endif
+#else
+
 static int
 stricmp(const char *str1, const char *str2)
 {
@@ -235,6 +252,8 @@ wcsnicmp(const wchar_t *s1, const wchar_t *s2, size_t count)
 
     return *s1 - *s2;
 }
+
+#endif // _WIN32
 
 /*
  * "size" is the number of character in "dest" buffer.

@@ -254,9 +254,12 @@ void HandleInstanceLoadInfo(Connection *conn, size_t psize, Packet *packet)
     world->map_id = pack->map_id;
     world->district = pack->district;
     world->language = (DistrictLanguage)pack->language;
+    world->is_observer = (pack->is_observer != 0);
 
-    LogInfo("InstanceInfo {agent: %d, map: %d, language: %d, district: %d}", pack->agent, pack->map_id, pack->language, pack->district);
+    LogInfo("InstanceInfo {agent: %d, map: %d, language: %d, district: %d, is_observer: %d}", pack->agent, pack->map_id, pack->language, pack->district, pack->is_observer);
     InstanceLoad_RequestData(conn);
+
+    (void)pack;
 }
 
 void HandleInstanceLoadHead(Connection *conn, size_t psize, Packet *packet)

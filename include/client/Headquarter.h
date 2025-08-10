@@ -93,6 +93,7 @@ HQAPI msec_t            GetWorldTime(void);
 
 HQAPI bool              GetIsIngame(void);
 HQAPI bool              GetIsConnected(void);
+HQAPI bool              GetIsObserver(void);
 HQAPI void              LogoutToCharselect(void);
 
 HQAPI int               GetMapId(void);

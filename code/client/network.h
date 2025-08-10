@@ -2,6 +2,7 @@
 #define CORE_NETWORK_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #ifdef _WIN32
 # include <winsock2.h>
 #else

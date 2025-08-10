@@ -71,6 +71,7 @@ void reset_world(World *world)
 
 void world_update(World *world, msec_t diff)
 {
+    world->world_time += diff;
     float diff_sec = diff / 1000.f;
     
     Effect *effect;
