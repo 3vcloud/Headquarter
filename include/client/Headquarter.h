@@ -235,5 +235,6 @@ HQAPI char**            GetArgv();
 
 HQAPI void              RequestMatch(void);
 HQAPI void              JoinObserverMatch(uint32_t match_id);
+HQAPI void              SetPacketLogger(void (*logger)(uint16_t, size_t, const void*));
 
 #endif // HEADQUARTER_H

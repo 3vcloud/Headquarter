@@ -3,6 +3,9 @@
 #endif
 #define CORE_NETWORK_C
 
+static void (*packet_logger)(uint16_t, size_t, const void*) = NULL;
+void SetPacketLogger(void (*logger)(uint16_t, size_t, const void*)) { packet_logger = logger; }
+
 bool NetIsInitialized;
 
 typedef struct DiffieHellmanCtx {
@@ -824,6 +827,10 @@ void NetConn_DispatchPackets(Connection *conn)
             return;
         }
 
+        if (conn->proto == 2 && packet_logger) {
+            packet_logger(header, format.unpack_size, &buffer.packet);
+        }
+        
         MsgHandler handler = array_at(&conn->handlers, header);
         if (handler)
             handler(conn, format.unpack_size, &buffer.packet);
