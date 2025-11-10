@@ -30,6 +30,12 @@ typedef enum EventType {
     EventType_PlayerPartySize,
     EventType_AgentDespawned,
     EventType_ObserverMatchReceive,
+    EventType_AgentMoveToPoint,
+    EventType_GenericValue,
+    EventType_GenericValueTarget,
+    EventType_GenericModifier,
+    EventType_GenericFloat,
+    EventType_JumboMessage,
 
     EventType_Count
 } EventType;
@@ -150,6 +156,40 @@ typedef struct Event {
             const struct PacketObserverMatchReceive* packet;
             size_t packet_size;
         } ObserverMatchReceive;
+        struct {
+            uint32_t agent_id;
+            float x;
+            float y;
+            int16_t plane;
+            int16_t current_plane;
+        } AgentMoveToPoint;
+        struct {
+            uint32_t value_id;
+            uint32_t agent_id;
+            uint32_t value;
+        } GenericValue;
+        struct {
+            uint32_t value_id;
+            uint32_t target;
+            uint32_t caster;
+            uint32_t value;
+        } GenericValueTarget;
+        struct {
+            uint32_t type;
+            uint32_t target_id;
+            uint32_t cause_id;
+            float value;
+        } GenericModifier;
+        struct {
+            uint32_t type;
+            uint32_t agent_id;
+            uint32_t target_id;
+            float value;
+        } GenericFloat;
+        struct {
+            uint8_t type;
+            uint32_t value;
+        } JumboMessage;
     };
 } Event;
 

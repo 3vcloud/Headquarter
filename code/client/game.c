@@ -533,6 +533,7 @@ void GameSrv_RegisterCallbacks(Connection *conn)
     handlers[GAME_SMSG_INSTANCE_LOAD_SPAWN_POINT]       = HandleInstanceLoadSpawnPoint;
     handlers[GAME_SMSG_INSTANCE_LOAD_INFO]              = HandleInstanceLoadInfo;
     handlers[GAME_SMSG_OBSERVER_MATCH_RECEIVE]          = HandleObserverMatchReceive;
+    handlers[GAME_SMSG_JUMBO_MESSAGE]                   = HandleJumboMessage;
     handlers[GAME_SMSG_TRANSFER_GAME_SERVER_INFO]       = HandleGameTransferInfo;
     handlers[GAME_SMSG_READY_FOR_MAP_SPAWN]             = HandleReadyForMapSpawn;
     handlers[GAME_SMSG_INSTANCE_CANT_ENTER]             = HandleCantEnterOutpost;
@@ -833,4 +834,28 @@ void JoinObserverMatch(uint32_t match_id)
             GameSrv_JoinObserverMatch(client, match_id);
         }
     }
+}
+
+void HandleJumboMessage(Connection *conn, size_t psize, Packet *packet)
+{
+#pragma pack(push, 1)
+    typedef struct {
+        Header header;
+        uint8_t type;
+        uint32_t value;
+    } JumboMessage;
+#pragma pack(pop)
+
+    assert(packet->header == GAME_SMSG_JUMBO_MESSAGE);
+    assert(sizeof(JumboMessage) == psize);
+
+    GwClient *client = cast(GwClient *)conn->data;
+    JumboMessage *pack = cast(JumboMessage *)packet;
+    assert(client && client->game_srv.secured);
+
+    Event event;
+    Event_Init(&event, EventType_JumboMessage);
+    event.JumboMessage.type = pack->type;
+    event.JumboMessage.value = pack->value;
+    broadcast_event(&client->event_mgr, &event);
 }

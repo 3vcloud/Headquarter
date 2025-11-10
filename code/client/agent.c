@@ -546,6 +546,15 @@ void HandleAgentMoveToPoint(Connection *conn, size_t psize, Packet *packet)
         world->interact_with = 0;
     }
     agent_set_distination(agent, pack->dest);
+
+    Event event;
+    Event_Init(&event, EventType_AgentMoveToPoint);
+    event.AgentMoveToPoint.agent_id = pack->agent_id;
+    event.AgentMoveToPoint.x = pack->dest.x;
+    event.AgentMoveToPoint.y = pack->dest.y;
+    event.AgentMoveToPoint.plane = pack->plane;
+    event.AgentMoveToPoint.current_plane = pack->current_plane;
+    broadcast_event(&client->event_mgr, &event);
 }
 
 void HandleAgentUpdateDestination(Connection *conn, size_t psize, Packet *packet)
@@ -758,6 +767,13 @@ void HandleAgentAttrUpdateInt(Connection *conn, size_t psize, Packet *packet)
         break;
     }
 
+    Event event;
+    Event_Init(&event, EventType_GenericValue);
+    event.GenericValue.value_id = pack->attr_id;
+    event.GenericValue.agent_id = pack->agent_id;
+    event.GenericValue.value = pack->value;
+    broadcast_event(&client->event_mgr, &event);
+
     // update_agent_attribute(agent, attr_id, pack->value);
 }
 
@@ -785,6 +801,14 @@ void HandleAgentAttrUpdateIntTarget(Connection *conn, size_t psize, Packet *pack
         LogError("Unvalid generic value {id: %d, value: %d}", attr_id, pack->value);
         return;
     }
+
+    Event event;
+    Event_Init(&event, EventType_GenericValueTarget);
+    event.GenericValueTarget.value_id = pack->attr_id;
+    event.GenericValueTarget.target = pack->target_id;
+    event.GenericValueTarget.caster = pack->cause_id;
+    event.GenericValueTarget.value = pack->value;
+    broadcast_event(&client->event_mgr, &event);
 }
 
 void HandleAgentAttrUpdateFloat(Connection *conn, size_t psize, Packet *packet)
@@ -828,6 +852,14 @@ void HandleAgentAttrUpdateFloat(Connection *conn, size_t psize, Packet *packet)
         agent->health_per_sec = pack->value;
         break;
     }
+
+    Event event;
+    Event_Init(&event, EventType_GenericModifier);
+    event.GenericModifier.type = pack->attr_id;
+    event.GenericModifier.target_id = pack->agent_id;
+    event.GenericModifier.cause_id = 0;
+    event.GenericModifier.value = pack->value;
+    broadcast_event(&client->event_mgr, &event);
 
     // update_agent_attribute(agent, attr_id, pack->value);
 }
@@ -878,6 +910,14 @@ void HandleAgentAttrUpdateFloatTarget(Connection *conn, size_t psize, Packet *pa
         target->health = clampf(target->health + pack->value, 0.f, (float)target->health_max);
         break;
     }
+
+    Event event;
+    Event_Init(&event, EventType_GenericFloat);
+    event.GenericFloat.type = pack->attr_id;
+    event.GenericFloat.agent_id = pack->cause_id;
+    event.GenericFloat.target_id = pack->target_id;
+    event.GenericFloat.value = pack->value;
+    broadcast_event(&client->event_mgr, &event);
 }
 
 void HandleAgentUpdateNpcName(Connection *conn, size_t psize, Packet *packet)

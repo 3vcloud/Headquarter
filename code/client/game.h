@@ -232,3 +232,4 @@ void HandlePartySearchRemove(Connection *conn, size_t psize, Packet *packet);
 void HandlePartySearchSize(Connection *conn, size_t psize, Packet *packet);
 void HandlePartySearchType(Connection *conn, size_t psize, Packet *packet);
 void HandleObserverMatchReceive(Connection *conn, size_t psize, Packet *packet);
+void HandleJumboMessage(Connection *conn, size_t psize, Packet *packet);
