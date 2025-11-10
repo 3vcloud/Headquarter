@@ -159,6 +159,13 @@ HQAPI bool UnRegisterEvent(CallbackEntry *entry)
     return true;
 }
 
+HQAPI Connection* GetGameConnection(void)
+{
+    if (!client)
+        return NULL;
+    return &client->game_srv;
+}
+
 HQAPI void LogoutToCharselect()
 {
 }

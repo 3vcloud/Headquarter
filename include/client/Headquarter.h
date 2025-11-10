@@ -87,6 +87,8 @@ HQAPI bool              LoadPlugin(const char *path);
 HQAPI bool              RegisterEvent(EventType event, CallbackEntry *entry);
 HQAPI bool              UnRegisterEvent(CallbackEntry *entry);
 
+HQAPI Connection*       GetGameConnection(void);
+
 HQAPI msec_t            GetPing(void);
 HQAPI msec_t            GetPvPTimer(void);
 HQAPI msec_t            GetWorldTime(void);
