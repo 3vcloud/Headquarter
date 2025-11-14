@@ -4,6 +4,18 @@
 #include <common/list.h>
 #include <stdbool.h>
 
+typedef enum ObserverMatchType {
+    ObserverMatchType_SpecialEvent = 0,
+    ObserverMatchType_HallOfHeroe = 1,
+    ObserverMatchType_MyGuildsBattle = 2,
+    ObserverMatchType_MyGuildsHeroesAscentGame = 3,
+    ObserverMatchType_TopGuildBattle = 4,
+    ObserverMatchType_TopGuildHeroesAscentGame = 5,
+    ObserverMatchType_UploadedGame = 6,
+    ObserverMatchType_Top1v1Battle = 7,
+    ObserverMatchType_Top1v1TournamentBattle = 8
+} ObserverMatchType;
+
 typedef enum EventType {
     EventType_AgentFocus,
     EventType_ChatMessage,
@@ -135,7 +147,7 @@ typedef struct Event {
                 uint32_t match_id;
                 uint16_t map_id;
                 uint16_t mins_ago;
-                uint8_t  unknown_byte0;
+                uint8_t  type;  // ObserverMatchType
                 uint8_t  unknown_byte1;
                 uint8_t  unknown_byte2;
                 uint32_t nested_count;
