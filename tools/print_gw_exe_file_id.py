@@ -3,9 +3,15 @@ import os
 import sys
 from scanner import FileScanner
 
+def follow_call(scanner, call_rva):
+    op, call_param = scanner.read(call_rva, '<Bi')
+    if op != 0xE8 and op != 0xE9:
+        raise RuntimeError(f"Unsupported opcode '0x{op:02X} ({op})'")
+    return call_rva + call_param + 5
+
 def get_file_id(scanner):
-    function_call_rva = scanner.find(b'\x8B\xC8\x33\xDB\x39\x8D\xC0\xFD\xFF\xFF\x0F\x95\xC3', -5)
-    function_rva = scanner.follow_call(function_call_rva)
+    function_call_rva = scanner.find(b'\x8B\xC8\x33\xDB\x39\x8D', -5)
+    function_rva = follow_call(scanner, function_call_rva)
     file_id, = scanner.read(function_rva + 1, '<I')
     return file_id
 

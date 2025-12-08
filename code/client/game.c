@@ -746,6 +746,7 @@ void GameSrv_PingReply(Connection *conn)
     typedef struct {
         Header header;
         uint32_t value;
+        uint32_t h006; // seems to always be 0
     } PingReply;
 #pragma pack(pop)
 

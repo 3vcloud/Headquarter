@@ -42,20 +42,20 @@ def main(args):
             print(line)
             continue
 
-        # format is: "#define name (hex) // dec"
+        # format is: "#define name (MASK | hex) // dec"
         words = line.split()
-        if len(words) != 5:
+        if len(words) != 7:
             print(line)
             continue
 
         # if the hex_val is not the same as the dec_val we notice it, but base our result on the hex
-        hex_val = int(words[2][3:-1], 16)
-        dec_val = int(words[4], 10)
+        hex_val = int(words[4][3:-1], 16)
+        dec_val = int(words[6], 10)
         if (hex_val & 0x7FFF) != (dec_val & 0x7FFF):
             print('// @@@@@@@ Error: hex val != dec val')
 
         val = hex_val + offset
-        print('#define', '%-43s' % words[1], '(0x%04X) // %d' % (val, val & 0x7FFF))
+        print(f'#define {words[1]:47s} {words[2]} | 0x{val:04X}) // {val}')
 
 if __name__ == '__main__':
     main(sys.argv[1:])
