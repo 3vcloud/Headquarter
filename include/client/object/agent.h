@@ -47,15 +47,45 @@ typedef struct ApiAgent {
     AgentId         agent_id;
     AgentType       type;
     AgentAllegiance allegiance;
-    uint32_t        effects;
+    bool            spawned;
 
-    Vec2f           position;
-    Vec2f           velocity;
-    float           rotation;
+    uint32_t        attacking_agent_id;
+    uint32_t        party_id;
+    uint32_t        npc_id;
+    uint32_t        item_id;
+    uint32_t        gadget_id;
+    uint32_t        player_id;
+
+    uint32_t        effects;
 
     float           health;
     float           energy;
     int32_t         health_max;
     int32_t         energy_max;
+
+    float           health_per_sec;
+    float           energy_per_sec;
+
+    Vec2f           velocity;
+    float           rotation;
+    float           speed;
+
+    int32_t         model_state;
+    Profession      prof1;
+    Profession      prof2;
+
+    bool            moving;
+    bool            maybe_moving;
+
+    float           speed_base;
+    float           speed_modifier;
+
+    Vec2f           position;
+    Vec2f           destination;
+    Vec2f           direction;
+
+    int32_t         level;
+    AgentMarker     marker;
+    uint32_t        casting_skill_id;
 } ApiAgent;
 typedef array(ApiAgent) ArrayApiAgent;
