@@ -38,7 +38,7 @@ def main(args):
     scanner = ProcessScanner(proc)
 
     address = scanner.find(b'\x83\xc0\x0c\x41\x3d\x68\x01\x00\x00')
-    translation_table_addr = proc.read(address + 0x19, 'I')[0]
+    translation_table_addr = proc.read(address + 0x1A, 'I')[0]
     translation_table_size = proc.read(address + 5, 'I')[0] // 4
     values = proc.read(translation_table_addr, f'{translation_table_size}I')
 

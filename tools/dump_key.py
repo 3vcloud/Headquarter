@@ -10,9 +10,16 @@ def print_bytes(bytes):
     str = '\\x' + '\\x'.join('%02X' % b for b in bytes)
     print(str)
 
+def follow_call(scanner, call_rva):
+    op, call_param = scanner.read(call_rva, '<Bi')
+    if op != 0xE8 and op != 0xE9:
+        raise RuntimeError(f"Unsupported opcode '0x{op:02X} ({op})'")
+    return call_rva + call_param + 5
+
 def get_build_number(scanner):
-    build_address = scanner.find(b'\xE9\x68\xFF\xFF\xFF\xCC\xCC\xB8', 8)
-    build_number, = scanner.read(build_address, '<I')
+    addr = scanner.find(b'\x68\x00\x00\x00\x10\x6A\x00\x6A\x00\x6A\x00\x50\xFF', -0x2A)
+    addr = follow_call(scanner, addr)
+    build_number, = scanner.read(addr + 1, '<I')
     return build_number
 
 def get_keys_from_scanner(scanner):

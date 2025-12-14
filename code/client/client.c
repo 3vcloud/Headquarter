@@ -158,6 +158,7 @@ void PortalAccountConnect(GwClient *client, struct uuid *user_id, struct uuid *t
         uint8_t  user_id[16];
         uint8_t  session_id[16];
         uint16_t charname[20];
+        uint16_t type[32]; // "Portal", presumably "Steam"?
     } PortalAccountLogin;
 #pragma pack(pop)
 
@@ -187,6 +188,12 @@ void PortalAccountConnect(GwClient *client, struct uuid *user_id, struct uuid *t
     //
     // memcpy(packet.charname, charname->buffer, charname->length * 2);
     // packet.charname[charname->length] = 0;
+
+    static char token_type[] = "Portal";
+    STATIC_ASSERT(ARRAY_SIZE(token_type) <= ARRAY_SIZE(packet.type));
+    for (size_t idx = 0; idx < ARRAY_SIZE(token_type); ++idx) {
+        packet.type[idx * 2] = token_type[idx];
+    }
 
     LogDebug("PortalAccountConnect: {trans_id: %lu}", trans_id);
     SendPacket(&client->auth_srv, sizeof(packet), &packet);
