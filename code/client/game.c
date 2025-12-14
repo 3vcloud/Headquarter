@@ -794,7 +794,7 @@ void GameSrv_RequestMatch(GwClient *client)
 {
     assert(client && client->game_srv.secured);
     
-    Packet packet = {142};
+    Packet packet = {GAME_CMSG_REQUEST_OBSERVER_MATCH};
     SendPacket(&client->game_srv, sizeof(packet), &packet);
 }
 
@@ -810,7 +810,7 @@ void GameSrv_JoinObserverMatch(GwClient *client, uint32_t match_id)
     #pragma pack(pop)
 
     JoinObserverMatch packet;
-    packet.header = 141;
+    packet.header = GAME_CMSG_JOIN_OBSERVER_MATCH;
     packet.match_id = match_id;
     SendPacket(&client->game_srv, sizeof(packet), &packet);
 }
